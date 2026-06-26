@@ -97,7 +97,7 @@ export function LearningRoadmapPanel() {
         ) : (
           <div className="linear-card p-5">
             <p className="text-sm text-muted-foreground">
-              Generate a roadmap after syncing GitHub data and running deterministic recommendations.
+              Generate a roadmap after syncing GitHub data and creating AI repository insights.
             </p>
           </div>
         )}

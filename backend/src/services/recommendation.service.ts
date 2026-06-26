@@ -32,6 +32,9 @@ interface RepositoryRow {
   license_key: string | null;
   is_archived: boolean;
   is_fork: boolean;
+  relationship_type?: "owner" | "fork" | "collaborator" | "contributor" | "organization_member" | null;
+  parent_repository_full_name?: string | null;
+  source?: string | null;
   pushed_at: string | null;
   github_updated_at: string | null;
   last_synced_at: string | null;
@@ -284,6 +287,9 @@ function toRepositorySummary(row: RepositoryRow): GitHubRepositorySummary {
     licenseKey: row.license_key,
     isArchived: row.is_archived,
     isFork: row.is_fork,
+    relationshipType: row.relationship_type ?? (row.is_fork ? "fork" : "owner"),
+    parentRepositoryFullName: row.parent_repository_full_name ?? null,
+    source: row.source ?? "github_sync",
     pushedAt: row.pushed_at,
     githubUpdatedAt: row.github_updated_at,
     lastSyncedAt: row.last_synced_at
@@ -579,9 +585,11 @@ export class RecommendationService {
     const { data, error } = await this.supabase
       .from("github_repositories")
       .select(
-        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,pushed_at,github_updated_at,last_synced_at,health_score,difficulty_level,raw_data"
+        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,relationship_type,parent_repository_full_name,source,pushed_at,github_updated_at,last_synced_at,health_score,difficulty_level,raw_data"
       )
-      .eq("owner_login", account.username)
+      .or(
+        `owner_login.eq.${account.username},relationship_type.in.(collaborator,contributor,organization_member)`
+      )
       .eq("is_archived", false);
 
     if (error) {

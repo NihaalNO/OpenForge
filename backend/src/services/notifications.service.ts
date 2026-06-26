@@ -9,6 +9,7 @@ export class NotificationsService {
       .from("notifications")
       .select("id,type,title,body,action_url,read_at,created_at")
       .eq("user_id", userId)
+      .not("type", "ilike", "%recommendation%")
       .order("created_at", { ascending: false })
       .limit(100);
 

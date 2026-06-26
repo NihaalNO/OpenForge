@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   analyzeRepository,
-  explainIssue,
   generateContributionPlan,
   generateLearningRoadmap,
   listAiLogs
@@ -13,7 +12,6 @@ export const aiRouter = Router();
 
 aiRouter.use(authMiddleware);
 aiRouter.post("/repository/:repositoryId/analyze", asyncHandler(analyzeRepository));
-aiRouter.post("/issues/:issueId/explain", asyncHandler(explainIssue));
 aiRouter.post("/learning-roadmap/generate", asyncHandler(generateLearningRoadmap));
 aiRouter.post("/contribution-plan/generate", asyncHandler(generateContributionPlan));
 aiRouter.get("/logs", asyncHandler(listAiLogs));

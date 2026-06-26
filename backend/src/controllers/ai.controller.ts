@@ -34,12 +34,6 @@ export async function analyzeRepository(req: Request, res: Response) {
   );
 }
 
-export async function explainIssue(req: Request, res: Response) {
-  res.json(
-    await aiService.explainIssue(requireUserId(req), requireParam(req, "issueId"), shouldRegenerate(req))
-  );
-}
-
 export async function generateLearningRoadmap(req: Request, res: Response) {
   res.json(await aiService.generateLearningRoadmap(requireUserId(req), shouldRegenerate(req)));
 }

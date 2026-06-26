@@ -191,24 +191,28 @@ ${JSON.stringify(
       return cached;
     }
 
-    const [skillProfile, repositories, issues] = await Promise.all([
+    const [skillProfile, repositories, aiInsights, contributionStats] = await Promise.all([
       this.getSkillProfile(userId),
-      this.getRecommendedRepositories(userId),
-      this.getRecommendedIssues(userId)
+      this.getSyncedRepositories(userId),
+      this.getRecentAiInsights(userId),
+      this.getContributionStats(userId)
     ]);
     const result = await this.generateAndLog<AiLearningRoadmap>({
       userId,
       analysisType: "roadmap",
-      prompt: `Generate a practical learning roadmap from this deterministic product data.
+      prompt: `Generate a practical learning roadmap from this GitHub and AI product data.
 
 Skill profile:
 ${JSON.stringify(skillProfile, null, 2)}
 
-Recommended repositories:
-${JSON.stringify(repositories.slice(0, 10), null, 2)}
+Synced repositories:
+${JSON.stringify(repositories, null, 2)}
 
-Recommended issues:
-${JSON.stringify(issues.slice(0, 10), null, 2)}`,
+Recent AI insights:
+${JSON.stringify(aiInsights, null, 2)}
+
+Contribution stats:
+${JSON.stringify(contributionStats, null, 2)}`,
       schemaHint:
         '{"currentSkills":["string"],"missingSkills":["string"],"weeklyRoadmap":[{"week":1,"focus":"string","tasks":["string"]}],"suggestedRepositories":["string"],"suggestedIssues":["string"]}'
     });
@@ -464,13 +468,24 @@ ${JSON.stringify(issue, null, 2)}`,
     return data;
   }
 
-  private async getRecommendedRepositories(userId: string) {
-    const { data, error } = await this.supabase
-      .from("repository_recommendations")
-      .select("score,reason,repository_id")
+  private async getSyncedRepositories(userId: string) {
+    const { data: account, error: accountError } = await this.supabase
+      .from("github_accounts")
+      .select("username")
       .eq("user_id", userId)
-      .order("score", { ascending: false })
-      .limit(10);
+      .maybeSingle();
+
+    if (accountError) {
+      throw accountError;
+    }
+
+    const username = account?.username ?? "";
+    const { data, error } = await this.supabase
+      .from("github_repositories")
+      .select("full_name,description,primary_language,languages,topics,is_fork,relationship_type,open_issues_count,github_updated_at")
+      .or(`owner_login.eq.${username},relationship_type.in.(collaborator,contributor,organization_member)`)
+      .order("github_updated_at", { ascending: false })
+      .limit(15);
 
     if (error) {
       throw error;
@@ -479,13 +494,29 @@ ${JSON.stringify(issue, null, 2)}`,
     return data ?? [];
   }
 
-  private async getRecommendedIssues(userId: string) {
+  private async getRecentAiInsights(userId: string) {
     const { data, error } = await this.supabase
-      .from("issue_recommendations")
-      .select("score,reason,issue_id")
+      .from("ai_analysis_logs")
+      .select("analysis_type,response_payload,created_at")
       .eq("user_id", userId)
-      .order("score", { ascending: false })
-      .limit(10);
+      .eq("status", "completed")
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+  }
+
+  private async getContributionStats(userId: string) {
+    const { data, error } = await this.supabase
+      .from("contribution_stats")
+      .select("prs_opened,prs_merged,issues_closed,repositories_contributed,languages,period_start,period_end")
+      .eq("user_id", userId)
+      .order("period_end", { ascending: false })
+      .limit(4);
 
     if (error) {
       throw error;

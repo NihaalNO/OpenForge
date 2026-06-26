@@ -21,6 +21,7 @@ export interface GitHubRepositoryPayload {
   id: number;
   owner: {
     login: string;
+    type?: "User" | "Organization";
   };
   name: string;
   full_name: string;
@@ -40,6 +41,9 @@ export interface GitHubRepositoryPayload {
   } | null;
   archived: boolean;
   fork: boolean;
+  parent?: {
+    full_name?: string | null;
+  } | null;
   pushed_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -105,9 +109,9 @@ export class GitHubClient {
     }
 
     if (!response.ok) {
-      const payload = await response.json().catch(() => null);
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
-      throw new ExternalServiceError("GitHub API request failed", "github_request_failed", {
+      throw new ExternalServiceError(payload?.message ?? "GitHub API request failed", "github_request_failed", {
         status: response.status,
         path,
         payload
@@ -119,6 +123,27 @@ export class GitHubClient {
     }
 
     return (await response.json()) as T;
+  }
+
+  async paginate<T>(path: string, init: RequestInit = {}) {
+    const results: T[] = [];
+    let page = 1;
+
+    while (true) {
+      const separator = path.includes("?") ? "&" : "?";
+      const pagePath = `${path}${separator}page=${page}`;
+      const payload = await this.rest<T[]>(pagePath, init);
+
+      results.push(...payload);
+
+      if (payload.length < 100) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return results;
   }
 
   async graphql<T>(query: string, variables: Record<string, unknown> = {}) {

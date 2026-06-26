@@ -1,5 +1,5 @@
-import { RepositoryRecommendations } from "@/components/recommendations/repository-recommendations";
+import { redirect } from "next/navigation";
 
-export default function RecommendationsPage() {
-  return <RepositoryRecommendations />;
+export default function RemovedRecommendationsPage() {
+  redirect("/app");
 }

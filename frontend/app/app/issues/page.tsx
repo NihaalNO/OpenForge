@@ -1,5 +1,5 @@
-import { IssueRecommendations } from "@/components/recommendations/issue-recommendations";
+import { redirect } from "next/navigation";
 
-export default function RecommendedIssuesPage() {
-  return <IssueRecommendations />;
+export default function RemovedIssuesPage() {
+  redirect("/app");
 }

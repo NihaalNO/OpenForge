@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BarChart3,
   Bell,
   BookOpen,
   Bot,
@@ -9,11 +8,8 @@ import {
   Github,
   Inbox,
   LayoutDashboard,
-  ListTodo,
   PanelLeft,
   Settings,
-  Sparkles,
-  Star
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,14 +17,10 @@ import type { ReactNode } from "react";
 import { LogoutButton } from "@/components/auth/logout-button";
 
 const navItems = [
-  { href: "/app", label: "Overview", icon: LayoutDashboard },
-  { href: "/app/repositories", label: "GitHub", icon: Github },
-  { href: "/app/recommendations", label: "Recommendations", icon: Sparkles },
-  { href: "/app/issues", label: "Issues", icon: ListTodo },
-  { href: "/app/saved", label: "Saved", icon: Star },
+  { href: "/app", label: "User Overview", icon: LayoutDashboard },
+  { href: "/app/repositories", label: "GitHub Data", icon: Github },
+  { href: "/app/contributions", label: "AI Planner", icon: Bot },
   { href: "/app/roadmap", label: "Learning Roadmap", icon: BookOpen },
-  { href: "/app/contributions", label: "AI Plans", icon: Bot },
-  { href: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/app/notifications", label: "Notifications", icon: Bell },
   { href: "/app/settings", label: "Settings", icon: Settings }
 ];

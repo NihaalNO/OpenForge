@@ -31,6 +31,9 @@ interface RepositoryRow {
   license_key: string | null;
   is_archived: boolean;
   is_fork: boolean;
+  relationship_type?: "owner" | "fork" | "collaborator" | "contributor" | "organization_member" | null;
+  parent_repository_full_name?: string | null;
+  source?: string | null;
   pushed_at: string | null;
   github_updated_at: string | null;
   last_synced_at: string | null;
@@ -76,6 +79,9 @@ function toRepositorySummary(row: RepositoryRow): GitHubRepositorySummary {
     licenseKey: row.license_key,
     isArchived: row.is_archived,
     isFork: row.is_fork,
+    relationshipType: row.relationship_type ?? (row.is_fork ? "fork" : "owner"),
+    parentRepositoryFullName: row.parent_repository_full_name ?? null,
+    source: row.source ?? "github_sync",
     pushedAt: row.pushed_at,
     githubUpdatedAt: row.github_updated_at,
     lastSyncedAt: row.last_synced_at
@@ -117,14 +123,23 @@ function sumRecord(records: Array<Record<string, number> | null | undefined>) {
     .sort((a, b) => b.value - a.value);
 }
 
+function toRoadmapStatus(
+  status: string | null | undefined
+): "not_generated" | "active" | "completed" | "archived" {
+  if (status === "active" || status === "completed" || status === "archived") {
+    return status;
+  }
+
+  return "not_generated";
+}
+
 export class DashboardService {
   private readonly supabase = getSupabaseServiceClient();
 
   async getDashboard(userId: string): Promise<DashboardResponse> {
     const user = await getCurrentUser(userId);
-    const [github, skillScore, counts, aiLogs, recentActivity] = await Promise.all([
+    const [github, counts, aiLogs, recentActivity] = await Promise.all([
       this.getGitHubProfile(userId),
-      this.getSkillScore(userId),
       this.getCounts(userId),
       this.getRecentAiLogs(userId),
       this.getRecentActivity(userId)
@@ -134,7 +149,6 @@ export class DashboardService {
       user,
       github,
       metrics: {
-        skillScore,
         ...counts
       },
       recentAiAnalyses: aiLogs,
@@ -312,47 +326,32 @@ export class DashboardService {
     };
   }
 
-  private async getSkillScore(userId: string) {
-    const { data, error } = await this.supabase
-      .from("skill_profiles")
-      .select("skill_score")
+  private async getCounts(userId: string) {
+    const { data: account, error: accountError } = await this.supabase
+      .from("github_accounts")
+      .select("username")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (error) {
-      throw error;
+    if (accountError) {
+      throw accountError;
     }
 
-    return Number(data?.skill_score ?? 0);
-  }
+    const username = account?.username ?? "";
+    const { data: repositories, error: repositoriesError } = await this.supabase
+      .from("github_repositories")
+      .select("id,owner_login,is_fork,relationship_type")
+      .or(`owner_login.eq.${username},relationship_type.in.(collaborator,contributor,organization_member)`);
 
-  private async getCounts(userId: string) {
-    const count = async (
-      table: "repository_recommendations" | "issue_recommendations" | "saved_repositories" | "saved_issues"
-    ) => {
-      const { count: total, error } = await this.supabase
-        .from(table)
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId);
+    if (repositoriesError) {
+      throw repositoriesError;
+    }
 
-      if (error) {
-        throw error;
-      }
-
-      return total ?? 0;
-    };
-
-    const [
-      recommendedRepositories,
-      recommendedIssues,
-      savedRepositories,
-      savedIssues
-    ] = await Promise.all([
-      count("repository_recommendations"),
-      count("issue_recommendations"),
-      count("saved_repositories"),
-      count("saved_issues")
-    ]);
+    const repositoryRows = (repositories ?? []) as Array<{
+      owner_login: string;
+      is_fork: boolean;
+      relationship_type: string | null;
+    }>;
     const { count: unreadNotifications, error } = await this.supabase
       .from("notifications")
       .select("id", { count: "exact", head: true })
@@ -363,11 +362,51 @@ export class DashboardService {
       throw error;
     }
 
+    const { count: aiAnalysesCompleted, error: aiError } = await this.supabase
+      .from("ai_analysis_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "completed");
+
+    if (aiError) {
+      throw aiError;
+    }
+
+    const { count: contributionPlansGenerated, error: planError } = await this.supabase
+      .from("ai_analysis_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .eq("analysis_type", "contribution_plan");
+
+    if (planError) {
+      throw planError;
+    }
+
+    const { data: roadmap, error: roadmapError } = await this.supabase
+      .from("learning_roadmaps")
+      .select("status")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (roadmapError) {
+      throw roadmapError;
+    }
+
     return {
-      recommendedRepositories,
-      recommendedIssues,
-      savedRepositories,
-      savedIssues,
+      totalRepositories: repositoryRows.length,
+      ownedRepositories: repositoryRows.filter((repository) => repository.owner_login === username && !repository.is_fork).length,
+      forkedRepositories: repositoryRows.filter((repository) => repository.is_fork).length,
+      contributedRepositories: repositoryRows.filter((repository) =>
+        repository.relationship_type === "collaborator" ||
+        repository.relationship_type === "contributor" ||
+        repository.relationship_type === "organization_member"
+      ).length,
+      aiAnalysesCompleted: aiAnalysesCompleted ?? 0,
+      contributionPlansGenerated: contributionPlansGenerated ?? 0,
+      learningRoadmapStatus: toRoadmapStatus(roadmap?.status),
       unreadNotifications: unreadNotifications ?? 0
     };
   }
@@ -399,6 +438,7 @@ export class DashboardService {
       .from("notifications")
       .select("id,type,title,body,created_at")
       .eq("user_id", userId)
+      .not("type", "ilike", "%recommendation%")
       .order("created_at", { ascending: false })
       .limit(6);
 

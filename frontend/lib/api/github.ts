@@ -2,7 +2,6 @@
 
 import type {
   GitHubIssuesResponse,
-  GitHubIssueSyncResponse,
   GitHubProfileResponse,
   GitHubRepositoriesResponse,
   GitHubRepositoryResponse,
@@ -64,14 +63,5 @@ export function fetchGitHubRepository(owner: string, repo: string) {
 export function fetchGitHubIssues(owner: string, repo: string) {
   return apiRequest<GitHubIssuesResponse>(
     `/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues`
-  );
-}
-
-export function syncGitHubIssues(owner: string, repo: string) {
-  return apiRequest<GitHubIssueSyncResponse>(
-    `/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/sync`,
-    {
-      method: "POST"
-    }
   );
 }

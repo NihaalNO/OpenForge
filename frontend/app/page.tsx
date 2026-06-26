@@ -96,7 +96,7 @@ function HeroMockup() {
           <div className="rounded-md border border-border bg-card p-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
-              <p className="text-sm font-medium">AI issue explanation</p>
+              <p className="text-sm font-medium">AI contribution plan</p>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
               This issue likely touches the onboarding flow and form state. Start by reproducing the bug,

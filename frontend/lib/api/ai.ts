@@ -3,7 +3,6 @@
 import type {
   AiAnalysisResponse,
   AiContributionPlan,
-  AiIssueExplanation,
   AiLearningRoadmap,
   AiLogsResponse,
   AiRepositoryAnalysis
@@ -18,13 +17,6 @@ export function analyzeRepository(repositoryId: string, regenerate = false) {
       body: JSON.stringify({ regenerate })
     }
   );
-}
-
-export function explainIssue(issueId: string, regenerate = false) {
-  return apiRequest<AiAnalysisResponse<AiIssueExplanation>>(`/ai/issues/${issueId}/explain`, {
-    method: "POST",
-    body: JSON.stringify({ regenerate })
-  });
 }
 
 export function generateLearningRoadmap(regenerate = false) {

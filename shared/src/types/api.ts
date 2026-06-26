@@ -69,6 +69,9 @@ export interface GitHubRepositorySummary {
   licenseKey: string | null;
   isArchived: boolean;
   isFork: boolean;
+  relationshipType: "owner" | "fork" | "collaborator" | "contributor" | "organization_member";
+  parentRepositoryFullName: string | null;
+  source: string;
   pushedAt: string | null;
   githubUpdatedAt: string | null;
   lastSyncedAt: string | null;
@@ -264,11 +267,13 @@ export interface DashboardResponse {
   user: CurrentUserResponse["user"];
   github: GitHubProfileResponse["profile"] | null;
   metrics: {
-    skillScore: number;
-    recommendedRepositories: number;
-    recommendedIssues: number;
-    savedRepositories: number;
-    savedIssues: number;
+    totalRepositories: number;
+    ownedRepositories: number;
+    forkedRepositories: number;
+    contributedRepositories: number;
+    aiAnalysesCompleted: number;
+    contributionPlansGenerated: number;
+    learningRoadmapStatus: "not_generated" | "active" | "completed" | "archived";
     unreadNotifications: number;
   };
   recentAiAnalyses: AiLogSummary[];

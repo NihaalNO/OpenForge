@@ -19,6 +19,15 @@ async function getSessionTokens(options: { refresh?: boolean } = {}) {
   const supabase = getSupabaseBrowserClient();
   const { data } = options.refresh ? await supabase.auth.refreshSession() : await supabase.auth.getSession();
 
+  if (!options.refresh && !data.session?.access_token) {
+    const refreshed = await supabase.auth.refreshSession();
+
+    return {
+      accessToken: refreshed.data.session?.access_token ?? null,
+      providerToken: refreshed.data.session?.provider_token ?? null
+    };
+  }
+
   return {
     accessToken: data.session?.access_token ?? null,
     providerToken: data.session?.provider_token ?? null

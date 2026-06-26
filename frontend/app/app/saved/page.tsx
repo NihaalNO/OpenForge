@@ -1,5 +1,5 @@
-import { SavedDashboard } from "@/components/dashboard/saved-dashboard";
+import { redirect } from "next/navigation";
 
-export default function SavedPage() {
-  return <SavedDashboard />;
+export default function RemovedSavedPage() {
+  redirect("/app");
 }

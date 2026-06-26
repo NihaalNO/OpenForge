@@ -40,6 +40,9 @@ interface RepositoryRow {
   license_key: string | null;
   is_archived: boolean;
   is_fork: boolean;
+  relationship_type?: RepositoryRelationshipType | null;
+  parent_repository_full_name?: string | null;
+  source?: string | null;
   pushed_at: string | null;
   github_updated_at: string | null;
   last_synced_at: string | null;
@@ -67,6 +70,9 @@ interface RepositoryUpsertPayload {
   license_key: string | null;
   is_archived: boolean;
   is_fork: boolean;
+  relationship_type: RepositoryRelationshipType;
+  parent_repository_full_name: string | null;
+  source: "github_sync";
   pushed_at: string | null;
   github_created_at: string | null;
   github_updated_at: string | null;
@@ -107,6 +113,36 @@ interface ContributionGraphqlResponse {
   };
 }
 
+type RepositoryRelationshipType = "owner" | "fork" | "collaborator" | "contributor" | "organization_member";
+
+interface RepositoryWithRelationship {
+  repository: GitHubRepositoryPayload;
+  relationshipType: RepositoryRelationshipType;
+}
+
+interface ContributedRepositoriesGraphqlResponse {
+  data?: {
+    viewer?: {
+      repositoriesContributedTo?: {
+        nodes?: Array<{
+          name: string;
+          owner: {
+            login: string;
+          };
+        } | null>;
+        pageInfo: {
+          hasNextPage: boolean;
+          endCursor: string | null;
+        };
+      };
+    };
+  };
+}
+
+type ContributedRepositoriesConnection = NonNullable<
+  NonNullable<NonNullable<ContributedRepositoriesGraphqlResponse["data"]>["viewer"]>["repositoriesContributedTo"]
+>;
+
 function toRepositorySummary(row: RepositoryRow): GitHubRepositorySummary {
   const rawVisibility = row.raw_data?.visibility;
   const derivedVisibility = rawVisibility ?? (row.raw_data?.private ? "private" : "public");
@@ -130,6 +166,9 @@ function toRepositorySummary(row: RepositoryRow): GitHubRepositorySummary {
     licenseKey: row.license_key,
     isArchived: row.is_archived,
     isFork: row.is_fork,
+    relationshipType: row.relationship_type ?? (row.is_fork ? "fork" : "owner"),
+    parentRepositoryFullName: row.parent_repository_full_name ?? null,
+    source: row.source ?? "github_sync",
     pushedAt: row.pushed_at,
     githubUpdatedAt: row.github_updated_at,
     lastSyncedAt: row.last_synced_at
@@ -216,12 +255,10 @@ export class GitHubService {
 
     await this.upsertAccountProfile(userId, profile, client);
 
-    const repositories = await client.rest<GitHubRepositoryPayload[]>(
-      "/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator"
-    );
-    const syncableRepositories = repositories.filter((repo) => !repo.archived);
+    const repositories = await this.fetchAuthenticatedRepositories(client, profile.login);
+    const syncableRepositories = repositories.filter((item) => !item.repository.archived);
     const [repositoriesSynced, contributionStatsSynced] = await Promise.all([
-      this.syncRepositoryPayloads(client, syncableRepositories),
+      this.syncRepositoryPayloads(userId, client, syncableRepositories),
       this.syncContributionStats(userId, client)
     ]);
     const syncedAt = new Date().toISOString();
@@ -240,9 +277,11 @@ export class GitHubService {
     const { data, error } = await this.supabase
       .from("github_repositories")
       .select(
-        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,pushed_at,github_updated_at,last_synced_at,raw_data"
+        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,relationship_type,parent_repository_full_name,source,pushed_at,github_updated_at,last_synced_at,raw_data"
       )
-      .eq("owner_login", account.username)
+      .or(
+        `owner_login.eq.${account.username},relationship_type.in.(collaborator,contributor,organization_member)`
+      )
       .order("github_updated_at", { ascending: false });
 
     if (error) {
@@ -291,7 +330,11 @@ export class GitHubService {
 
     if (!repository) {
       const repositoryPayload = await client.rest<GitHubRepositoryPayload>(`/repos/${owner}/${repo}`);
-      repository = await this.syncRepositoryPayload(client, repositoryPayload);
+      repository = await this.syncRepositoryPayload(
+        client,
+        repositoryPayload,
+        this.getRepositoryRelationship(repositoryPayload, account.username)
+      );
     }
 
     const issuePayloads = await client.rest<GitHubIssuePayload[]>(
@@ -342,15 +385,23 @@ export class GitHubService {
     };
   }
 
-  private async syncRepositoryPayload(client: GitHubClient, repository: GitHubRepositoryPayload) {
-    const payload = await this.buildRepositoryUpsertPayload(client, repository);
+  private async syncRepositoryPayload(
+    client: GitHubClient,
+    repository: GitHubRepositoryPayload,
+    relationshipType?: RepositoryRelationshipType
+  ) {
+    const payload = await this.buildRepositoryUpsertPayload(
+      client,
+      repository,
+      relationshipType ?? this.getRepositoryRelationship(repository, repository.owner.login)
+    );
     const { data, error } = await this.supabase
       .from("github_repositories")
       .upsert(payload, {
         onConflict: "github_repo_id"
       })
       .select(
-        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,pushed_at,github_updated_at,last_synced_at,raw_data"
+        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,relationship_type,parent_repository_full_name,source,pushed_at,github_updated_at,last_synced_at,raw_data"
       )
       .single();
 
@@ -363,13 +414,17 @@ export class GitHubService {
     return data as RepositoryRow;
   }
 
-  private async syncRepositoryPayloads(client: GitHubClient, repositories: GitHubRepositoryPayload[]) {
+  private async syncRepositoryPayloads(
+    userId: string,
+    client: GitHubClient,
+    repositories: RepositoryWithRelationship[]
+  ) {
     if (repositories.length === 0) {
       return 0;
     }
 
-    const payloads = await mapWithConcurrency(repositories, 8, (repository) =>
-      this.buildRepositoryUpsertPayload(client, repository)
+    const payloads = await mapWithConcurrency(repositories, 8, (item) =>
+      this.buildRepositoryUpsertPayload(client, item.repository, item.relationshipType)
     );
     const { error } = await this.supabase.from("github_repositories").upsert(payloads, {
       onConflict: "github_repo_id"
@@ -379,18 +434,15 @@ export class GitHubService {
       throw error;
     }
 
-    const firstRepository = repositories[0];
-
-    if (firstRepository) {
-      await this.updateRateLimitByClient(client, firstRepository.owner.login);
-    }
+    await this.updateRateLimit(userId, client);
 
     return payloads.length;
   }
 
   private async buildRepositoryUpsertPayload(
     client: GitHubClient,
-    repository: GitHubRepositoryPayload
+    repository: GitHubRepositoryPayload,
+    relationshipType: RepositoryRelationshipType
   ): Promise<RepositoryUpsertPayload> {
     const languages = await client.rest<Record<string, number>>(
       `/repos/${repository.owner.login}/${repository.name}/languages`
@@ -414,12 +466,127 @@ export class GitHubService {
       license_key: repository.license?.key ?? null,
       is_archived: repository.archived,
       is_fork: repository.fork,
+      relationship_type: repository.fork ? "fork" : relationshipType,
+      parent_repository_full_name: repository.parent?.full_name ?? null,
+      source: "github_sync",
       pushed_at: repository.pushed_at,
       github_created_at: repository.created_at,
       github_updated_at: repository.updated_at,
       raw_data: repository,
       last_synced_at: new Date().toISOString()
     };
+  }
+
+  private async fetchAuthenticatedRepositories(client: GitHubClient, username: string) {
+    const affiliatedRepositories = await client.paginate<GitHubRepositoryPayload>(
+      "/user/repos?per_page=100&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member"
+    );
+    const repositoryMap = new Map<number, RepositoryWithRelationship>();
+
+    for (const repository of affiliatedRepositories) {
+      repositoryMap.set(repository.id, {
+        repository,
+        relationshipType: this.getRepositoryRelationship(repository, username)
+      });
+    }
+
+    const contributedRepositories = await this.fetchContributedRepositories(client);
+
+    for (const repository of contributedRepositories) {
+      const existing = repositoryMap.get(repository.id);
+
+      if (!existing) {
+        repositoryMap.set(repository.id, {
+          repository,
+          relationshipType: "contributor"
+        });
+        continue;
+      }
+
+      if (existing.relationshipType !== "owner" && existing.relationshipType !== "fork") {
+        repositoryMap.set(repository.id, {
+          repository: existing.repository,
+          relationshipType: existing.relationshipType === "organization_member" ? "organization_member" : "contributor"
+        });
+      }
+    }
+
+    return [...repositoryMap.values()];
+  }
+
+  private getRepositoryRelationship(repository: GitHubRepositoryPayload, username: string): RepositoryRelationshipType {
+    if (repository.owner.login === username && repository.fork) {
+      return "fork";
+    }
+
+    if (repository.owner.login === username) {
+      return "owner";
+    }
+
+    if (repository.owner.type === "Organization") {
+      return "organization_member";
+    }
+
+    return "collaborator";
+  }
+
+  private async fetchContributedRepositories(client: GitHubClient) {
+    const repositories: GitHubRepositoryPayload[] = [];
+    let cursor: string | null = null;
+
+    try {
+      do {
+        const query = `
+          query ViewerContributedRepositories($cursor: String) {
+            viewer {
+              repositoriesContributedTo(
+                first: 100
+                after: $cursor
+                includeUserRepositories: false
+                contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY]
+              ) {
+                nodes {
+                  name
+                  owner {
+                    login
+                  }
+                }
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+              }
+            }
+          }
+        `;
+        const response: ContributedRepositoriesGraphqlResponse = await client.graphql<ContributedRepositoriesGraphqlResponse>(query, {
+          cursor
+        });
+        const contributed: ContributedRepositoriesConnection | undefined =
+          response.data?.viewer?.repositoriesContributedTo;
+
+        if (!contributed) {
+          break;
+        }
+
+        for (const node of contributed.nodes ?? []) {
+          if (!node) {
+            continue;
+          }
+
+          const repository = await client.rest<GitHubRepositoryPayload>(
+            `/repos/${node.owner.login}/${node.name}`
+          );
+          repositories.push(repository);
+        }
+
+        cursor = contributed.pageInfo.hasNextPage ? contributed.pageInfo.endCursor : null;
+      } while (cursor);
+    } catch {
+      return repositories;
+    }
+
+    return repositories;
   }
 
   private async syncContributionStats(userId: string, client: GitHubClient) {
@@ -567,7 +734,7 @@ export class GitHubService {
     const { data, error } = await this.supabase
       .from("github_repositories")
       .select(
-        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,pushed_at,github_updated_at,last_synced_at,raw_data"
+        "id,owner_login,name,full_name,description,html_url,default_branch,primary_language,languages,topics,stars_count,forks_count,open_issues_count,watchers_count,license_key,is_archived,is_fork,relationship_type,parent_repository_full_name,source,pushed_at,github_updated_at,last_synced_at,raw_data"
       )
       .eq("owner_login", owner)
       .eq("name", repo)

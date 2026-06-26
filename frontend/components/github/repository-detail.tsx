@@ -1,13 +1,9 @@
 "use client";
 
-import type { GitHubIssueSummary, GitHubRepositorySummary } from "@opensource-compass/shared";
-import { RefreshCw } from "lucide-react";
+import type { GitHubRepositorySummary } from "@opensource-compass/shared";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  fetchGitHubIssues,
-  fetchGitHubRepository,
-  syncGitHubIssues
-} from "@/lib/api/github";
+import { fetchGitHubRepository } from "@/lib/api/github";
 import { RepositoryAiPanel } from "@/components/ai/repository-ai-panel";
 
 interface RepositoryDetailProps {
@@ -17,33 +13,13 @@ interface RepositoryDetailProps {
 
 export function RepositoryDetail({ owner, repo }: RepositoryDetailProps) {
   const [repository, setRepository] = useState<GitHubRepositorySummary | null>(null);
-  const [issues, setIssues] = useState<GitHubIssueSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSyncingIssues, setIsSyncingIssues] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadRepositoryData() {
-    const [repositoryResponse, issuesResponse] = await Promise.all([
-      fetchGitHubRepository(owner, repo),
-      fetchGitHubIssues(owner, repo)
-    ]);
+    const repositoryResponse = await fetchGitHubRepository(owner, repo);
 
     setRepository(repositoryResponse.repository);
-    setIssues(issuesResponse.issues);
-  }
-
-  async function handleIssueSync() {
-    setIsSyncingIssues(true);
-    setError(null);
-
-    try {
-      await syncGitHubIssues(owner, repo);
-      await loadRepositoryData();
-    } catch (syncError) {
-      setError(syncError instanceof Error ? syncError.message : "Issue sync failed");
-    } finally {
-      setIsSyncingIssues(false);
-    }
   }
 
   useEffect(() => {
@@ -84,14 +60,22 @@ export function RepositoryDetail({ owner, repo }: RepositoryDetailProps) {
                     {repository.description ?? "No description provided."}
                   </p>
                 </div>
-                <a
-                  href={repository.htmlUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
-                >
-                  Open GitHub
-                </a>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={repository.htmlUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="linear-button"
+                  >
+                    Open GitHub
+                  </a>
+                  <Link
+                    href={`/app/contributions?repositoryId=${encodeURIComponent(repository.id)}`}
+                    className="linear-button-primary"
+                  >
+                    Generate AI Contribution Plan
+                  </Link>
+                </div>
               </div>
 
               <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-4">
@@ -127,60 +111,6 @@ export function RepositoryDetail({ owner, repo }: RepositoryDetailProps) {
             </div>
 
             <RepositoryAiPanel repositoryId={repository.id} />
-
-            <div className="rounded-lg border bg-card p-6 text-card-foreground">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-semibold">Issues</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Sync open issues for this selected repository.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleIssueSync}
-                  disabled={isSyncingIssues}
-                  className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                  {isSyncingIssues ? "Syncing..." : "Sync issues"}
-                </button>
-              </div>
-
-              {issues.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">
-                  No issues synced yet. Run issue sync for this repository.
-                </p>
-              ) : (
-                <ul className="mt-4 divide-y">
-                  {issues.map((issue) => (
-                    <li key={issue.id} className="py-4">
-                      <a
-                        href={issue.htmlUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium hover:underline"
-                      >
-                        #{issue.number} {issue.title}
-                      </a>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {issue.labels.map((label) => (
-                          <span key={label} className="rounded-md border px-2 py-1 text-xs">
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                      <a
-                        href={`/app/issues/${issue.id}`}
-                        className="mt-3 inline-flex rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
-                      >
-                        Explain with AI
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </>
         ) : null}
       </section>

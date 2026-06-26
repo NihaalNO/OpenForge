@@ -26,6 +26,14 @@ interface ChatCompletionResponse {
   };
 }
 
+interface ProviderErrorResponse {
+  error?: {
+    message?: string;
+    code?: string;
+  } | string;
+  message?: string;
+}
+
 interface GeminiResponse {
   candidates?: Array<{
     content?: {
@@ -78,6 +86,26 @@ async function fetchProvider(provider: string, url: string, init: RequestInit) {
       provider,
       cause: error instanceof Error ? error.message : "fetch failed"
     });
+  }
+}
+
+async function getProviderErrorMessage(response: Response, provider: string) {
+  const body = await response.text().catch(() => "");
+
+  if (!body) {
+    return `${provider} request failed`;
+  }
+
+  try {
+    const payload = JSON.parse(body) as ProviderErrorResponse;
+    const errorMessage =
+      typeof payload.error === "string"
+        ? payload.error
+        : payload.error?.message ?? payload.message;
+
+    return errorMessage ? `${provider}: ${errorMessage}` : `${provider} request failed`;
+  } catch {
+    return `${provider}: ${body.slice(0, 240)}`;
   }
 }
 
@@ -141,7 +169,8 @@ export class AiProviderService {
     );
 
     if (!response.ok) {
-      throw new ExternalServiceError("AI provider request failed", "ai_provider_failed", {
+      throw new ExternalServiceError(await getProviderErrorMessage(response, providerName), "ai_provider_failed", {
+        provider: providerName,
         status: response.status
       });
     }
@@ -187,7 +216,8 @@ export class AiProviderService {
     );
 
     if (!response.ok) {
-      throw new ExternalServiceError("Gemini request failed", "ai_provider_failed", {
+      throw new ExternalServiceError(await getProviderErrorMessage(response, "Gemini"), "ai_provider_failed", {
+        provider: "Gemini",
         status: response.status
       });
     }
@@ -224,7 +254,8 @@ export class AiProviderService {
     });
 
     if (!response.ok) {
-      throw new ExternalServiceError("Ollama request failed", "ai_provider_failed", {
+      throw new ExternalServiceError(await getProviderErrorMessage(response, "Ollama"), "ai_provider_failed", {
+        provider: "Ollama",
         status: response.status
       });
     }

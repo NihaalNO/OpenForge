@@ -1,13 +1,44 @@
 "use client";
 
 import type { GitHubRepositorySummary } from "@opensource-compass/shared";
-import { RefreshCw, Star } from "lucide-react";
+import { GitFork, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchGitHubRepositories, syncGitHubData } from "@/lib/api/github";
+
+type RepositoryFilter = "all" | "owner" | "fork" | "contributor" | "organization_member";
+
+const filters: Array<{ value: RepositoryFilter; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "owner", label: "Owned" },
+  { value: "fork", label: "Forks" },
+  { value: "contributor", label: "Collaborator/Contributor" },
+  { value: "organization_member", label: "Organizations" }
+];
+
+function relationshipLabel(repository: GitHubRepositorySummary) {
+  if (repository.relationshipType === "organization_member") {
+    return "Organization";
+  }
+
+  if (repository.relationshipType === "contributor") {
+    return "Contributor";
+  }
+
+  if (repository.relationshipType === "collaborator") {
+    return "Collaborator";
+  }
+
+  if (repository.relationshipType === "fork") {
+    return "Fork";
+  }
+
+  return "Owner";
+}
 
 export function RepositoryList() {
   const [repositories, setRepositories] = useState<GitHubRepositorySummary[]>([]);
+  const [activeFilter, setActiveFilter] = useState<RepositoryFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,51 +72,79 @@ export function RepositoryList() {
       });
   }, []);
 
+  const visibleRepositories = useMemo(() => {
+    if (activeFilter === "all") {
+      return repositories;
+    }
+
+    if (activeFilter === "contributor") {
+      return repositories.filter((repository) =>
+        repository.relationshipType === "collaborator" || repository.relationshipType === "contributor"
+      );
+    }
+
+    return repositories.filter((repository) => repository.relationshipType === activeFilter);
+  }, [activeFilter, repositories]);
+
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground">
-      <section className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              GitHub data
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold">Repositories</h1>
+            <p className="text-sm text-muted-foreground">GitHub data</p>
+            <h1 className="mt-1 text-2xl font-semibold">Repositories</h1>
           </div>
           <button
             type="button"
             onClick={handleSync}
             disabled={isSyncing}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="linear-button-primary"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             {isSyncing ? "Syncing..." : "Sync repositories"}
           </button>
         </div>
 
+        <div className="flex gap-2 overflow-x-auto">
+          {filters.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              onClick={() => setActiveFilter(filter.value)}
+              className={`whitespace-nowrap rounded-md border px-3 py-2 text-sm transition ${
+                activeFilter === filter.value
+                  ? "border-primary/40 bg-accent text-foreground"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
         {error ? (
-          <div className="rounded-lg border border-destructive/40 bg-card p-4 text-sm text-destructive">
+          <div className="linear-card border-destructive/40 p-4 text-sm text-destructive">
             {error}
           </div>
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-lg border bg-card p-5 text-card-foreground">
+          <div className="linear-card p-5">
             <p className="text-sm text-muted-foreground">Loading repositories...</p>
           </div>
-        ) : repositories.length === 0 ? (
-          <div className="rounded-lg border bg-card p-5 text-card-foreground">
+        ) : visibleRepositories.length === 0 ? (
+          <div className="linear-card p-5">
             <h2 className="text-lg font-medium">No repositories synced</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Run a GitHub sync to fetch your public repositories.
+              Run a GitHub sync or switch filters to view owned, forked, collaborator, contributor, and organization repositories.
             </p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {repositories.map((repository) => (
+            {visibleRepositories.map((repository) => (
               <Link
                 key={repository.id}
                 href={`/app/repositories/${repository.ownerLogin}/${repository.name}`}
-                className="rounded-lg border bg-card p-5 text-card-foreground transition hover:border-foreground/30"
+                className="linear-card block p-5 transition hover:border-foreground/30"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -94,9 +153,20 @@ export function RepositoryList() {
                       {repository.description ?? "No description provided."}
                     </p>
                   </div>
-                  <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground">
-                    {repository.visibility ?? "public"}
-                  </span>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <span className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">
+                      {relationshipLabel(repository)}
+                    </span>
+                    {repository.isFork ? (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">
+                        <GitFork className="h-3 w-3" aria-hidden="true" />
+                        Fork
+                      </span>
+                    ) : null}
+                    <span className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">
+                      {repository.visibility ?? "public"}
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
                   <span>{repository.primaryLanguage ?? "Unknown"}</span>
@@ -107,12 +177,15 @@ export function RepositoryList() {
                   <span>{repository.forksCount} forks</span>
                   <span>{repository.openIssuesCount} open issues</span>
                 </div>
+                {repository.isFork && repository.parentRepositoryFullName ? (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Forked from {repository.parentRepositoryFullName}
+                  </p>
+                ) : null}
               </Link>
             ))}
           </div>
         )}
-      </section>
-    </main>
+      </div>
   );
 }
-
