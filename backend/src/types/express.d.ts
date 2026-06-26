@@ -7,6 +7,7 @@ export interface AuthContext {
   email: string | null;
   role: string;
   expiresAt: string | null;
+  githubProviderToken: string | null;
 }
 
 declare global {
@@ -16,4 +17,3 @@ declare global {
     }
   }
 }
-

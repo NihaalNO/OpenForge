@@ -1,11 +1,5 @@
-import { ProtectedPlaceholder } from "@/components/common/protected-placeholder";
+import { RepositoryList } from "@/components/github/repository-list";
 
 export default function RepositoryRecommendationsPage() {
-  return (
-    <ProtectedPlaceholder
-      title="Repository Recommendations"
-      description="Repository recommendations will be implemented during the GitHub integration and recommendation phases."
-    />
-  );
+  return <RepositoryList />;
 }
-

@@ -1,11 +1,11 @@
-import { ProtectedPlaceholder } from "@/components/common/protected-placeholder";
+import { RepositoryDetail } from "@/components/github/repository-detail";
 
-export default function RepositoryExplorerPage() {
-  return (
-    <ProtectedPlaceholder
-      title="Repository Explorer"
-      description="Repository details and AI summaries will be implemented after authenticated GitHub sync is available."
-    />
-  );
+export default async function RepositoryExplorerPage({
+  params
+}: {
+  params: Promise<{ owner: string; repo: string }>;
+}) {
+  const { owner, repo } = await params;
+
+  return <RepositoryDetail owner={decodeURIComponent(owner)} repo={decodeURIComponent(repo)} />;
 }
-

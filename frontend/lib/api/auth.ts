@@ -1,6 +1,11 @@
 "use client";
 
-import type { CurrentUserResponse, LogoutResponse, SessionResponse } from "@opensource-compass/shared";
+import type {
+  CompleteOnboardingResponse,
+  CurrentUserResponse,
+  LogoutResponse,
+  SessionResponse
+} from "@opensource-compass/shared";
 import { apiRequest } from "./client";
 
 export function fetchCurrentUser() {
@@ -17,3 +22,8 @@ export function notifyBackendLogout() {
   });
 }
 
+export function completeOnboarding() {
+  return apiRequest<CompleteOnboardingResponse>("/auth/onboarding", {
+    method: "PATCH"
+  });
+}

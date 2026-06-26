@@ -1,4 +1,5 @@
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { CompleteOnboardingButton } from "@/components/auth/complete-onboarding-button";
 import { LogoutButton } from "@/components/auth/logout-button";
 
 export default function OnboardingPage() {
@@ -19,13 +20,13 @@ export default function OnboardingPage() {
           <div className="rounded-lg border bg-card p-5 text-card-foreground">
             <h2 className="text-lg font-medium">Next step</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              The full goals and preferences onboarding form will be implemented after the auth
-              foundation. New accounts intentionally stay here until onboarding is completed.
+              Your GitHub account is connected. Continue to the dashboard to sync your GitHub
+              profile and repositories.
             </p>
+            <CompleteOnboardingButton />
           </div>
         </section>
       </main>
     </AuthGuard>
   );
 }
-

@@ -29,9 +29,9 @@ export function createApp() {
   });
 
   app.use("/api/v1", apiRouter);
+  app.use("/api", apiRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 
   return app;
 }
-

@@ -1,4 +1,5 @@
 import { LogoutButton } from "@/components/auth/logout-button";
+import { GitHubDashboard } from "@/components/github/github-dashboard";
 
 export default function AppHomePage() {
   return (
@@ -14,14 +15,8 @@ export default function AppHomePage() {
           <LogoutButton />
         </div>
 
-        <div className="rounded-lg border bg-card p-5 text-card-foreground">
-          <h2 className="text-lg font-medium">Phase 2 authentication ready</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            This protected route is reserved for the Phase 3 GitHub integration and dashboard work.
-          </p>
-        </div>
+        <GitHubDashboard />
       </section>
     </main>
   );
 }
-

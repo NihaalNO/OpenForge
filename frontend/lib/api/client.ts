@@ -26,6 +26,10 @@ export async function apiRequest<TResponse>(path: string, init: RequestInit = {}
     headers.set("Authorization", `Bearer ${data.session.access_token}`);
   }
 
+  if (data.session?.provider_token) {
+    headers.set("x-github-provider-token", data.session.provider_token);
+  }
+
   const response = await fetch(`${frontendEnv.apiUrl}${path}`, {
     ...init,
     headers
@@ -43,4 +47,3 @@ export async function apiRequest<TResponse>(path: string, init: RequestInit = {}
 
   return (await response.json()) as TResponse;
 }
-

@@ -33,7 +33,8 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
       userId: data.user.id,
       email: data.user.email ?? null,
       role: String(data.user.app_metadata.role ?? "user"),
-      expiresAt: getJwtExpiresAt(token)
+      expiresAt: getJwtExpiresAt(token),
+      githubProviderToken: req.header("x-github-provider-token") ?? null
     };
 
     next();
@@ -41,4 +42,3 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
     next(error);
   }
 }
-

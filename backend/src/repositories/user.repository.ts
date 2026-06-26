@@ -50,7 +50,10 @@ function getGithubUsername(metadata: GithubIdentityMetadata) {
   return metadata.user_name ?? metadata.preferred_username ?? null;
 }
 
-export async function upsertAuthenticatedUser(user: User): Promise<CurrentUserResponse["user"]> {
+export async function upsertAuthenticatedUser(
+  user: User,
+  githubProviderToken?: string | null
+): Promise<CurrentUserResponse["user"]> {
   const supabase = getSupabaseServiceClient();
   const githubMetadata = getGithubMetadata(user);
   const githubUserId = getGithubUserId(githubMetadata);
@@ -97,18 +100,31 @@ export async function upsertAuthenticatedUser(user: User): Promise<CurrentUserRe
   }
 
   if (githubUserId && githubUsername) {
-    const { error: githubError } = await supabase.from("github_accounts").upsert(
-      {
-        user_id: user.id,
-        github_user_id: githubUserId,
+    const githubAccountPayload: {
+      user_id: string;
+      github_user_id: number;
+      username: string;
+      access_token_encrypted?: string;
+      scopes: string[];
+      profile_data: Record<string, string | null>;
+    } = {
+      user_id: user.id,
+      github_user_id: githubUserId,
+      username: githubUsername,
+      scopes: ["read:user", "user:email"],
+      profile_data: {
         username: githubUsername,
-        scopes: ["read:user", "user:email"],
-        profile_data: {
-          username: githubUsername,
-          avatar_url: githubMetadata.avatar_url ?? null,
-          name: githubMetadata.full_name ?? githubMetadata.name ?? null
-        }
-      },
+        avatar_url: githubMetadata.avatar_url ?? null,
+        name: githubMetadata.full_name ?? githubMetadata.name ?? null
+      }
+    };
+
+    if (githubProviderToken) {
+      githubAccountPayload.access_token_encrypted = githubProviderToken;
+    }
+
+    const { error: githubError } = await supabase.from("github_accounts").upsert(
+      githubAccountPayload,
       {
         onConflict: "user_id"
       }
@@ -159,3 +175,18 @@ export async function getCurrentUser(userId: string): Promise<CurrentUserRespons
   };
 }
 
+export async function completeUserOnboarding(userId: string): Promise<CurrentUserResponse["user"]> {
+  const supabase = getSupabaseServiceClient();
+  const { error } = await supabase
+    .from("users")
+    .update({
+      onboarding_completed: true
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return getCurrentUser(userId);
+}
