@@ -1,50 +1,137 @@
-# OpenSource Compass
+# 🧭 OpenSource Compass
 
-OpenSource Compass is an AI-powered developer platform that helps users discover, understand, and contribute to open-source GitHub projects based on their GitHub profile, skills, and experience level.
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=111111)
+![Express](https://img.shields.io/badge/Express-4-111111?style=for-the-badge&logo=express&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Ready-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
-This repository currently contains the Phase 1 foundation scaffold. It intentionally does not implement product features beyond a frontend starter page, a backend health endpoint, shared TypeScript contracts, environment examples, and database artifacts.
+**OpenSource Compass** is an AI-assisted developer platform designed to help contributors discover, evaluate, and participate in open-source GitHub projects according to their profile, skills, interests, and current experience level.
 
-## Source of Truth
+The project studies a practical research question:
 
-Planning documents live in `docs/`:
+> How can GitHub profile intelligence, repository metadata, and AI-guided planning reduce the discovery and onboarding friction faced by new and intermediate open-source contributors?
 
-- `docs/01-system-architecture.md`
-- `docs/02-database-schema.md`
-- `docs/03-api-specification.md`
-- `docs/04-auth-flow.md`
-- `docs/05-github-integration-flow.md`
-- `docs/06-ai-pipeline-design.md`
-- `docs/07-frontend-architecture.md`
-- `docs/08-backend-architecture.md`
-- `docs/09-development-roadmap.md`
-- `docs/10-folder-structure.md`
+---
 
-## Workspace Structure
+## 📌 Abstract
 
-```text
-frontend/   Next.js application shell
-backend/    Express API shell with /health
-shared/     Shared TypeScript types and constants
-database/   Schema and migration placeholders
-scripts/    Development, deployment, and sync script placeholders
-docs/       Architecture and planning documents
+Open-source participation is often limited by information overload, unclear contribution pathways, and the difficulty of matching a developer's abilities to suitable repositories. OpenSource Compass proposes a structured recommendation and planning system that combines GitHub data, skill analysis, repository assessment, and AI-generated contribution guidance.
+
+The current implementation provides a full-stack TypeScript foundation with a Next.js frontend, Express backend, shared contracts package, Supabase-ready authentication utilities, GitHub-oriented service layers, dashboard views, AI planning panels, and database artifacts. The repository is organized as a monorepo to keep application, API, and shared type contracts aligned during iterative research and product development.
+
+## 🔑 Keywords
+
+`Open Source Discovery` · `GitHub Intelligence` · `AI Contribution Planning` · `Developer Onboarding` · `Repository Recommendation` · `Full-Stack TypeScript`
+
+## 🎯 Research Objectives
+
+| Objective | Description |
+| --- | --- |
+| 🧠 Skill-aware matching | Analyze contributor context and align users with repositories that fit their current technical profile. |
+| 🔎 Repository understanding | Surface repository details, contribution opportunities, issues, and project signals in a structured dashboard. |
+| 🛠️ Contribution planning | Generate actionable contribution plans, learning roadmaps, and repository-specific guidance. |
+| 🔐 Authenticated workflow | Support protected application flows with Supabase-ready authentication and onboarding. |
+| 📊 Evaluation readiness | Maintain modular services and shared contracts so recommendation quality can be evaluated over time. |
+
+## 🧩 System Overview
+
+```mermaid
+flowchart LR
+    User["👤 Developer"] --> Frontend["🖥️ Next.js Frontend"]
+    Frontend --> API["⚙️ Express API"]
+    API --> GitHub["🐙 GitHub Services"]
+    API --> AI["🤖 AI Planning Services"]
+    API --> DB["🗄️ Database / Supabase"]
+    API --> Shared["📦 Shared Type Contracts"]
+    Frontend --> Shared
 ```
 
-## Prerequisites
+## 🏗️ Architecture
 
-- Node.js 20+
-- npm 10+
-- Docker, optional for local PostgreSQL
+| Layer | Technology | Responsibility |
+| --- | --- | --- |
+| 🖥️ Frontend | Next.js 15, React 19, Tailwind CSS | Application shell, protected pages, dashboards, repository views, AI result panels. |
+| ⚙️ Backend | Express, TypeScript, Zod | REST API, request middleware, controllers, services, validation, health endpoints. |
+| 📦 Shared | TypeScript workspace package | Shared API types, constants, and contracts used by frontend and backend. |
+| 🗄️ Data | SQL schema, Supabase-ready utilities | User, repository, recommendation, and contribution-oriented persistence model. |
+| 🤖 AI Services | Backend service abstraction | Repository analysis, contribution planning, roadmap generation, and AI response shaping. |
+| 🐙 GitHub | GitHub client/service layer | Repository metadata, issue-oriented workflows, and developer profile integration. |
 
-## Local Setup
+## ✨ Feature Matrix
 
-1. Install dependencies:
+| Area | Status | Notes |
+| --- | --- | --- |
+| ✅ Monorepo foundation | Implemented | npm workspaces for `frontend`, `backend`, and `shared`. |
+| ✅ Health API | Implemented | `GET /health` and versioned health routes. |
+| ✅ Dashboard shell | Implemented | Auth-aware application area with dashboard-oriented components. |
+| ✅ GitHub service layer | Implemented | Backend client/service structure and frontend API adapters. |
+| ✅ AI planning UI | Implemented | Panels for repository AI, learning roadmap, and contribution planning. |
+| ✅ Shared contracts | Implemented | Reusable TypeScript package for cross-layer consistency. |
+| 🚧 Automated tests | Planned | Workspace test scripts currently act as placeholders. |
+| 🚧 Production deployment | Planned | Docker and deployment script placeholders are present. |
+
+## 📁 Repository Structure
+
+```text
+OpenSource-Compass/
+├── frontend/                         # Next.js application workspace
+│   ├── app/                           # App Router pages and layouts
+│   │   ├── app/                       # Protected application routes
+│   │   ├── auth/callback/             # Authentication callback route
+│   │   ├── login/                     # Login page
+│   │   └── onboarding/                # User onboarding page
+│   ├── components/                    # UI, auth, dashboard, GitHub, and AI components
+│   ├── lib/                           # API clients, environment helpers, Supabase client
+│   └── package.json                   # Frontend scripts and dependencies
+├── backend/                           # Express API workspace
+│   ├── src/
+│   │   ├── config/                    # Environment configuration
+│   │   ├── controllers/               # Route controllers
+│   │   ├── lib/                       # HTTP errors, JWT, GitHub and Supabase helpers
+│   │   ├── middleware/                # Auth, errors, request IDs, 404 handling
+│   │   ├── repositories/              # Data access abstractions
+│   │   ├── routes/                    # API route modules
+│   │   ├── services/                  # GitHub, AI, dashboard, settings, notification logic
+│   │   └── server.ts                  # API entry point
+│   └── package.json                   # Backend scripts and dependencies
+├── shared/                            # Shared TypeScript package
+│   └── src/                           # API contracts, constants, and shared types
+├── database/                          # SQL schema, migrations, and seeds
+├── scripts/                           # Development, sync, and deployment script placeholders
+├── docker-compose.yml                 # Optional local PostgreSQL service
+├── eslint.config.mjs                  # Repository ESLint configuration
+├── package.json                       # Root workspace scripts
+└── README.md                          # Research-grade project overview
+```
+
+## 🧪 Methodology
+
+The project follows an incremental research-and-build methodology:
+
+1. **Profile acquisition**: collect authenticated developer context through GitHub and onboarding flows.
+2. **Repository signal extraction**: inspect repository metadata, issue surfaces, contribution hints, and project activity.
+3. **Skill-to-repository alignment**: compare contributor skill state against repository complexity and contribution opportunities.
+4. **AI-assisted planning**: produce contribution plans, learning roadmaps, and repository-specific explanations.
+5. **Feedback and evaluation**: refine recommendation quality using user actions, saved repositories, and contribution outcomes.
+
+## ⚙️ Prerequisites
+
+| Tool | Recommended Version | Purpose |
+| --- | --- | --- |
+| Node.js | 20+ | Runtime for frontend, backend, and shared workspace packages. |
+| npm | 10+ | Workspace package manager. |
+| Docker | Optional | Local PostgreSQL service through `docker-compose.yml`. |
+
+## 🚀 Local Development
+
+1. Install dependencies.
 
    ```bash
    npm install
    ```
 
-2. Copy environment examples:
+2. Create local environment files.
 
    ```bash
    cp .env.example .env
@@ -52,41 +139,81 @@ docs/       Architecture and planning documents
    cp backend/.env.example backend/.env
    ```
 
-3. Start local PostgreSQL, optional:
+3. Start PostgreSQL if you want the local database service.
 
    ```bash
    docker compose up -d postgres
    ```
 
-4. Run the development servers:
+4. Run the development stack.
 
    ```bash
    npm run dev
    ```
 
-The frontend defaults to `http://localhost:3000`.
-The backend defaults to `http://localhost:4000`.
+| Service | Default URL |
+| --- | --- |
+| 🖥️ Frontend | `http://localhost:3000` |
+| ⚙️ Backend | `http://localhost:4000` |
 
-## Useful Commands
+## 🧰 Command Reference
 
 ```bash
-npm run dev
-npm run dev:frontend
-npm run dev:backend
+npm run dev             # Build shared package, then run shared, backend, and frontend watchers
+npm run dev:frontend    # Start only the Next.js frontend
+npm run dev:backend     # Start only the Express backend
+npm run build           # Build shared, backend, and frontend workspaces
+npm run lint            # Run ESLint across workspaces
+npm run typecheck       # Type-check all TypeScript workspaces
+npm run test            # Run workspace test scripts
+npm run format          # Format the repository with Prettier
+npm run format:check    # Check formatting without writing changes
+```
+
+## 🔐 Environment Model
+
+The repository includes example environment files for the root, frontend, and backend workspaces. Runtime configuration is centralized through environment helper modules so missing or invalid values can be reported clearly during development.
+
+```text
+.env.example
+frontend/.env.example
+backend/.env.example
+```
+
+## 📊 Evaluation Plan
+
+Future evaluation can measure the platform with both engineering and user-centered criteria:
+
+| Dimension | Example Metric |
+| --- | --- |
+| Recommendation quality | Match score relevance, accepted recommendations, saved repositories. |
+| Onboarding efficiency | Time from login to first actionable contribution plan. |
+| AI usefulness | User rating of generated roadmap, plan specificity, hallucination rate. |
+| System reliability | API uptime, response latency, failed GitHub sync attempts. |
+| Developer experience | Type coverage, lint stability, build success, maintainability of shared contracts. |
+
+## 🗺️ Development Roadmap
+
+| Phase | Focus |
+| --- | --- |
+| Phase 1 | Full-stack foundation, shared contracts, health endpoints, initial app shell. |
+| Phase 2 | Supabase GitHub OAuth, authenticated user bootstrap, onboarding, protected routes. |
+| Phase 3 | GitHub synchronization, repository exploration, issue discovery, profile enrichment. |
+| Phase 4 | AI recommendation engine, contribution planner, learning roadmap generation. |
+| Phase 5 | Evaluation loops, analytics, notification workflows, deployment hardening. |
+
+## 🤝 Contribution Notes
+
+OpenSource Compass is structured for modular contribution. Frontend work generally belongs in `frontend/app`, `frontend/components`, or `frontend/lib`; backend work should follow the route-controller-service structure under `backend/src`; shared API contracts should be placed in `shared/src` when both application layers need the same type definitions.
+
+Before opening a pull request, run:
+
+```bash
 npm run lint
 npm run typecheck
 npm run build
-npm run test
 ```
 
-## Phase 1 Acceptance Criteria
+## 📜 License
 
-- Frontend app scaffold exists and can run after dependency installation.
-- Backend health endpoint exists at `GET /health` and `GET /api/v1/health`.
-- Shared types can be imported by frontend and backend.
-- Environment validation is centralized and returns clear errors.
-- Database schema is copied into `database/schema.sql`.
-
-## Next Phase
-
-Phase 2 should implement Supabase GitHub OAuth, authenticated user bootstrap, onboarding, and protected route guards using the docs as the contract.
+This project is currently private and does not declare a public license. Add a license before distributing, publishing, or accepting external contributions.
