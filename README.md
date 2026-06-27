@@ -216,4 +216,4 @@ npm run build
 
 ## 📜 License
 
-This project is currently private and does not declare a public license. Add a license before distributing, publishing, or accepting external contributions.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
