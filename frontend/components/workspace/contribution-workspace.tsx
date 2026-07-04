@@ -1,19 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { Button, Card } from "@/components/common/ui";
 import { WorkspaceProvider, useWorkspace } from "./workspace-context";
 import {
-  RepositoryHero,
   WorkspaceError,
   WorkspaceHeader,
   WorkspaceLayout,
   WorkspaceLoader,
-  WorkspaceOverview,
   WorkspacePlaceholder,
   WorkspaceTabBar,
   type WorkspaceTab
 } from "./workspace-components";
 import { WorkspaceLauncher } from "./workspace-launcher";
+import { WorkspaceOverview } from "./workspace-overview";
 
 export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo: string }) {
   return (
@@ -24,26 +25,25 @@ export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo
 }
 
 function ContributionWorkspace() {
-  const { repository, intelligence, isLoading, isGenerating, error, regenerateIntelligence } = useWorkspace();
+  const { repository, intelligence, isLoading, isGenerating, error, retry, regenerateIntelligence } = useWorkspace();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
 
   if (isLoading) return <WorkspaceLoader />;
-  if (error && !repository) return <WorkspaceError message={error} />;
-  if (!repository) return <WorkspaceError message="Repository was not found." />;
+  if (error && !repository) return <WorkspaceLoadError message={error} onRetry={() => void retry()} />;
+  if (!repository) return <WorkspaceLoadError message="Repository was not found." onRetry={() => void retry()} />;
 
   return (
     <WorkspaceLayout>
-      <WorkspaceHeader
-        repository={repository}
-        intelligence={intelligence}
-        isGenerating={isGenerating}
-        onRegenerate={() => void regenerateIntelligence()}
-      />
+      <WorkspaceHeader repository={repository} />
       {error ? <WorkspaceError message={error} /> : null}
-      <RepositoryHero repository={repository} intelligence={intelligence} />
       <WorkspaceTabBar activeTab={activeTab} onChange={setActiveTab} />
       {activeTab === "overview" ? (
-        <WorkspaceOverview repository={repository} intelligence={intelligence} />
+        <WorkspaceOverview
+          repository={repository}
+          intelligence={intelligence}
+          isGenerating={isGenerating}
+          onRegenerate={() => void regenerateIntelligence()}
+        />
       ) : (
         <WorkspacePlaceholder tab={activeTab} />
       )}
@@ -53,6 +53,28 @@ function ContributionWorkspace() {
 
 export function WorkspaceSelector() {
   return <WorkspaceLauncher />;
+}
+
+function WorkspaceLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <Card className="p-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Workspace could not open</p>
+          <h1 className="mt-2 text-2xl font-semibold text-foreground">Something blocked this repository workspace.</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{message}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={onRetry} variant="primary">
+            Retry
+          </Button>
+          <Link href="/app/repositories" className="openforge-button">
+            Return to Repository
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export {

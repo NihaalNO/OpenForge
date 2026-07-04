@@ -20,6 +20,7 @@ interface WorkspaceContextValue {
   futureMission: null;
   futureMentor: null;
   futureActivity: null;
+  retry: () => Promise<void>;
   regenerateIntelligence: () => Promise<void>;
 }
 
@@ -40,43 +41,43 @@ export function WorkspaceProvider({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function loadWorkspace(active = true) {
+    setIsLoading(true);
+    setError(null);
+    setIntelligence(null);
+
+    try {
+      const repositoryResponse = await fetchGitHubRepository(owner, repo);
+      if (!active) return;
+
+      setRepository(repositoryResponse.repository);
+
+      try {
+        const intelligenceResponse = await fetchRepositoryIntelligence(repositoryResponse.repository.id);
+        if (active) {
+          setIntelligence(intelligenceResponse.knowledgePackage);
+        }
+      } catch {
+        if (active) {
+          setIntelligence(null);
+        }
+      }
+    } catch (loadError) {
+      if (active) {
+        setRepository(null);
+        setError(loadError instanceof Error ? loadError.message : "Unable to load workspace");
+      }
+    } finally {
+      if (active) {
+        setIsLoading(false);
+      }
+    }
+  }
+
   useEffect(() => {
     let active = true;
 
-    async function loadWorkspace() {
-      setIsLoading(true);
-      setError(null);
-      setIntelligence(null);
-
-      try {
-        const repositoryResponse = await fetchGitHubRepository(owner, repo);
-        if (!active) return;
-
-        setRepository(repositoryResponse.repository);
-
-        try {
-          const intelligenceResponse = await fetchRepositoryIntelligence(repositoryResponse.repository.id);
-          if (active) {
-            setIntelligence(intelligenceResponse.knowledgePackage);
-          }
-        } catch {
-          if (active) {
-            setIntelligence(null);
-          }
-        }
-      } catch (loadError) {
-        if (active) {
-          setRepository(null);
-          setError(loadError instanceof Error ? loadError.message : "Unable to load workspace");
-        }
-      } finally {
-        if (active) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadWorkspace();
+    void loadWorkspace(active);
 
     return () => {
       active = false;
@@ -112,6 +113,7 @@ export function WorkspaceProvider({
       futureMission: null,
       futureMentor: null,
       futureActivity: null,
+      retry: () => loadWorkspace(),
       regenerateIntelligence
     };
   }, [repository, intelligence, isLoading, isGenerating, error]);
