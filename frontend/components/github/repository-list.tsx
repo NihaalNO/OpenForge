@@ -207,19 +207,21 @@ export function RepositoryList() {
                 <a href={repository.htmlUrl} target="_blank" rel="noreferrer" className="openforge-button">
                   Open in GitHub
                 </a>
-                <Link href={`/app/repositories/${repository.ownerLogin}/${repository.name}/workspace`} className="openforge-button-primary">
-                  Open Workspace
-                </Link>
-                {!intelligenceMap[repository.id] ? (
+                {intelligenceMap[repository.id] ? (
+                  <Link href={`/app/repositories/${repository.ownerLogin}/${repository.name}/workspace`} className="openforge-button-primary">
+                    Open Workspace
+                  </Link>
+                ) : (
                   <Button
                     type="button"
                     onClick={() => void handleGenerateIntelligence(repository.id)}
                     disabled={generatingRepositoryId === repository.id}
+                    variant="primary"
                   >
                     <BrainCircuit className="h-4 w-4" aria-hidden="true" />
                     {generatingRepositoryId === repository.id ? "Generating..." : "Generate Intelligence"}
                   </Button>
-                ) : null}
+                )}
               </div>
             </Card>
           ))}

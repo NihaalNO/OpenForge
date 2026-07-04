@@ -30,6 +30,10 @@ function isActive(pathname: string, href: string) {
     return pathname === href;
   }
 
+  if (href === "/app/contributions" && pathname.includes("/workspace")) {
+    return true;
+  }
+
   return pathname.startsWith(href);
 }
 
