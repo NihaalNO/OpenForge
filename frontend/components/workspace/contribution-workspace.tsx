@@ -14,6 +14,7 @@ import {
   type WorkspaceTab
 } from "./workspace-components";
 import { WorkspaceLauncher } from "./workspace-launcher";
+import { WorkspaceExplorer } from "./workspace-explorer";
 import { WorkspaceOverview } from "./workspace-overview";
 
 export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo: string }) {
@@ -39,6 +40,13 @@ function ContributionWorkspace() {
       <WorkspaceTabBar activeTab={activeTab} onChange={setActiveTab} />
       {activeTab === "overview" ? (
         <WorkspaceOverview
+          repository={repository}
+          intelligence={intelligence}
+          isGenerating={isGenerating}
+          onRegenerate={() => void regenerateIntelligence()}
+        />
+      ) : activeTab === "map" ? (
+        <WorkspaceExplorer
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}

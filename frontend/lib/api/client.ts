@@ -54,9 +54,18 @@ async function sendRequest(path: string, init: RequestInit, options: { refresh?:
 
   headers.set("Content-Type", "application/json");
 
-  if (tokens.accessToken) {
-    headers.set("Authorization", `Bearer ${tokens.accessToken}`);
+  if (!tokens.accessToken) {
+    await getSupabaseBrowserClient().auth.signOut().catch(() => undefined);
+    redirectToLogin();
+
+    throw new ApiClientError(
+      401,
+      "unauthorized",
+      "Your session expired. Please sign in again to continue."
+    );
   }
+
+  headers.set("Authorization", `Bearer ${tokens.accessToken}`);
 
   if (tokens.providerToken) {
     headers.set("x-github-provider-token", tokens.providerToken);

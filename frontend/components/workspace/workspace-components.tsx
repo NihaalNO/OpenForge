@@ -23,15 +23,15 @@ export const workspaceTabs: Array<{
 }> = [
   {
     id: "overview",
-    label: "Overview",
+    label: "Home",
     icon: LayoutPanelTop,
-    purpose: "Repository intelligence, readiness signals, and workspace orientation."
+    purpose: "Repository onboarding, contributor readiness, and the clearest first path."
   },
   {
     id: "map",
-    label: "Repository Map",
+    label: "Explorer",
     icon: Map,
-    purpose: "Repository mapping will surface important folders, entry points, tests, and documentation."
+    purpose: "Explorer explains architecture, concepts, reading order, and contribution domains before files."
   },
   {
     id: "mission",
@@ -49,7 +49,7 @@ export const workspaceTabs: Array<{
     id: "quality",
     label: "Quality Gate",
     icon: ShieldCheck,
-    purpose: "Quality checks will help contributors verify setup, tests, CI expectations, and pull request readiness."
+    purpose: "Quality checks will help contributors verify setup, tests, CI expectations, and pull request preparation."
   },
   {
     id: "activity",
