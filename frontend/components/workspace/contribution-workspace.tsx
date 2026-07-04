@@ -762,7 +762,11 @@ function DetailBlock({ title, items, fallback }: { title: string; items: string[
     <div className="rounded-[15px] border border-border bg-card p-3">
       <p className="text-xs font-medium uppercase text-muted-foreground">{title}</p>
       <div className="mt-2 flex flex-wrap gap-2">
-        {items.length ? items.map((item) => <Badge key={item}>{item}</Badge>) : <span className="text-sm text-muted-foreground">{fallback}</span>}
+        {items.length ? (
+          items.map((item, index) => <Badge key={`${title}-${item}-${index}`}>{item}</Badge>)
+        ) : (
+          <span className="text-sm text-muted-foreground">{fallback}</span>
+        )}
       </div>
     </div>
   );
