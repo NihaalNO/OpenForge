@@ -15,6 +15,7 @@ import {
 } from "./workspace-components";
 import { WorkspaceLauncher } from "./workspace-launcher";
 import { WorkspaceExplorer } from "./workspace-explorer";
+import { MissionEngine } from "./mission-engine";
 import { WorkspaceOverview } from "./workspace-overview";
 
 export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo: string }) {
@@ -44,9 +45,17 @@ function ContributionWorkspace() {
           intelligence={intelligence}
           isGenerating={isGenerating}
           onRegenerate={() => void regenerateIntelligence()}
+          onStartMission={() => setActiveTab("mission")}
         />
       ) : activeTab === "map" ? (
         <WorkspaceExplorer
+          repository={repository}
+          intelligence={intelligence}
+          isGenerating={isGenerating}
+          onRegenerate={() => void regenerateIntelligence()}
+        />
+      ) : activeTab === "mission" ? (
+        <MissionEngine
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}

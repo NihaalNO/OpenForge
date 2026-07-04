@@ -342,12 +342,14 @@ export function WelcomeSection({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate
+  onRegenerate,
+  onStartMission
 }: {
   repository: GitHubRepositorySummary;
   intelligence: RepositoryKnowledgePackage;
   isGenerating: boolean;
   onRegenerate: () => void;
+  onStartMission: () => void;
 }) {
   return (
     <WorkspaceCard className="p-0">
@@ -382,13 +384,13 @@ export function WelcomeSection({
         <div className="border-t border-border bg-background p-5 lg:border-l lg:border-t-0">
           <button
             type="button"
-            disabled
-            className="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand-violet px-5 py-2.5 text-sm font-medium text-white opacity-70"
+            onClick={onStartMission}
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-violet px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-violet/90"
           >
             <Route className="h-4 w-4" aria-hidden="true" />
             Start Mission
           </button>
-          <p className="mt-3 text-xs leading-5 text-muted-foreground">Mission planning arrives in a later phase.</p>
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">Turn this orientation into a guided contribution workflow.</p>
 
           <div className="mt-5 grid gap-2">
             <Button type="button" onClick={onRegenerate} disabled={isGenerating}>
@@ -581,7 +583,13 @@ function MentorPoint({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function WorkspaceNextActions({ repository }: { repository: GitHubRepositorySummary }) {
+export function WorkspaceNextActions({
+  repository,
+  onStartMission
+}: {
+  repository: GitHubRepositorySummary;
+  onStartMission: () => void;
+}) {
   const actions = [
     {
       title: "Explore Repository",
@@ -594,7 +602,8 @@ export function WorkspaceNextActions({ repository }: { repository: GitHubReposit
       title: "Mission",
       description: "Turn this orientation into a focused contribution path.",
       icon: GitPullRequest,
-      enabled: false
+      enabled: true,
+      onClick: onStartMission
     },
     {
       title: "Mentor",
@@ -636,6 +645,19 @@ export function WorkspaceNextActions({ repository }: { repository: GitHubReposit
             );
           }
 
+          if (action.enabled && action.onClick) {
+            return (
+              <button
+                key={action.title}
+                type="button"
+                onClick={action.onClick}
+                className="grid min-h-40 cursor-pointer gap-4 rounded-[24px] border border-border bg-background p-5 text-left transition-colors hover:border-brand-violet/40 hover:bg-card sm:grid-cols-[auto_1fr_auto]"
+              >
+                {content}
+              </button>
+            );
+          }
+
           return (
             <div
               key={action.title}
@@ -654,12 +676,14 @@ export function WorkspaceOverview({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate
+  onRegenerate,
+  onStartMission
 }: {
   repository: GitHubRepositorySummary;
   intelligence: RepositoryKnowledgePackage | null;
   isGenerating: boolean;
   onRegenerate: () => void;
+  onStartMission: () => void;
 }) {
   if (!intelligence) {
     return (
@@ -683,6 +707,7 @@ export function WorkspaceOverview({
         intelligence={intelligence}
         isGenerating={isGenerating}
         onRegenerate={onRegenerate}
+        onStartMission={onStartMission}
       />
       <CanContributeSection intelligence={intelligence} />
       <OpenForgeInsightSection intelligence={intelligence} />
@@ -690,7 +715,7 @@ export function WorkspaceOverview({
       <WhyRecommendedSection repository={repository} intelligence={intelligence} />
       <FirstFifteenMinutesSection intelligence={intelligence} />
       <MentorshipSection intelligence={intelligence} />
-      <WorkspaceNextActions repository={repository} />
+      <WorkspaceNextActions repository={repository} onStartMission={onStartMission} />
     </div>
   );
 }
