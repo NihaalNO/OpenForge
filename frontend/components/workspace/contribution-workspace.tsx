@@ -97,7 +97,7 @@ function ContributionWorkspace() {
           }}
         />
       ) : activeTab === "timeline" ? (
-        <TimelineEngine repository={repository} />
+        <TimelineEngine repository={repository} intelligence={intelligence} />
       ) : (
         <WorkspacePlaceholder tab={activeTab} />
       )}
