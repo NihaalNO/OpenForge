@@ -794,7 +794,7 @@ function DictionaryPanel({
               type="button"
               onClick={() => onSelect(concept)}
               className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-[15px] border bg-background p-3 text-left transition-colors hover:border-brand-violet/40",
+                "flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-[15px] border bg-background p-3 text-left transition-colors hover:border-brand-violet/40",
                 active ? "border-brand-violet/50 bg-soft-blue-wash/45" : "border-border"
               )}
             >
