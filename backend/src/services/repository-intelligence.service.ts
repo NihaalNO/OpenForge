@@ -1,7 +1,7 @@
 import type {
   RepositoryImportance,
-  WorkspaceKnowledgePackage,
-  WorkspaceKnowledgeResponse
+  RepositoryKnowledgePackage,
+  RepositoryContextResponse
 } from "@openforge/shared";
 import { env } from "../config/env.js";
 import { GitHubClient } from "../lib/github-client.js";
@@ -335,35 +335,35 @@ function addIfDependency(dependencies: Set<string>, parsed: Record<string, unkno
   }
 }
 
-export class WorkspaceKnowledgeService {
+export class RepositoryIntelligenceService {
   private readonly supabase = getSupabaseServiceClient();
 
-  async getWorkspaceKnowledge(userId: string, repositoryId: string): Promise<WorkspaceKnowledgeResponse> {
+  async getRepositoryContext(userId: string, repositoryId: string): Promise<RepositoryContextResponse> {
     const row = await this.getCachedIntelligence(userId, repositoryId);
 
     if (!row) {
-      throw new NotFoundError("Workspace knowledge has not been generated", "workspace_repository_knowledge_not_found");
+      return this.buildRepositoryIntelligence(userId, repositoryId);
     }
 
     return {
-      knowledgePackage: row.knowledge_package as WorkspaceKnowledgePackage,
+      knowledgePackage: row.knowledge_package as RepositoryKnowledgePackage,
       cached: true,
-      workspaceKnowledgeId: row.id
+      repositoryContextId: row.id
     };
   }
 
-  async generateWorkspaceKnowledge(
+  async buildRepositoryIntelligence(
     userId: string,
     repositoryId: string,
     regenerate = false
-  ): Promise<WorkspaceKnowledgeResponse> {
+  ): Promise<RepositoryContextResponse> {
     const cached = regenerate ? null : await this.getCachedIntelligence(userId, repositoryId);
 
     if (cached) {
       return {
-        knowledgePackage: cached.knowledge_package as WorkspaceKnowledgePackage,
+        knowledgePackage: cached.knowledge_package as RepositoryKnowledgePackage,
         cached: true,
-        workspaceKnowledgeId: cached.id
+        repositoryContextId: cached.id
       };
     }
 
@@ -374,7 +374,7 @@ export class WorkspaceKnowledgeService {
     try {
       const knowledgePackage = await this.buildKnowledgePackage(client, repository);
       const { data, error } = await this.supabase
-        .from("workspace_repository_knowledge")
+        .from("repository_intelligence_context")
         .upsert(
           {
             user_id: userId,
@@ -405,10 +405,10 @@ export class WorkspaceKnowledgeService {
       return {
         knowledgePackage,
         cached: false,
-        workspaceKnowledgeId: data.id as string
+        repositoryContextId: data.id as string
       };
     } catch (error) {
-      await this.supabase.from("workspace_repository_knowledge").upsert(
+      await this.supabase.from("repository_intelligence_context").upsert(
         {
           user_id: userId,
           repository_id: repositoryId,
@@ -417,10 +417,10 @@ export class WorkspaceKnowledgeService {
             repositoryId,
             fullName: repository.full_name,
             provider: "github",
-            error: error instanceof Error ? error.message : "Workspace knowledge generation failed"
+            error: error instanceof Error ? error.message : "Repository intelligence failed"
           },
           status: "failed",
-          error_message: error instanceof Error ? error.message : "Workspace knowledge generation failed"
+          error_message: error instanceof Error ? error.message : "Repository intelligence failed"
         },
         { onConflict: "user_id,repository_id,provider" }
       );
@@ -433,7 +433,7 @@ export class WorkspaceKnowledgeService {
   async getLatestKnowledgePackage(userId: string, repositoryId: string) {
     const row = await this.getCachedIntelligence(userId, repositoryId);
 
-    return row?.knowledge_package as WorkspaceKnowledgePackage | undefined;
+    return row?.knowledge_package as RepositoryKnowledgePackage | undefined;
   }
 
   private async buildKnowledgePackage(client: GitHubClient, repository: RepositoryRow) {
@@ -502,7 +502,7 @@ export class WorkspaceKnowledgeService {
       raw: {
         selectedFilePaths: fetchedFiles.map((file) => file.path)
       }
-    } satisfies WorkspaceKnowledgePackage;
+    } satisfies RepositoryKnowledgePackage;
   }
 
   private async fetchReadme(client: GitHubClient, repository: RepositoryRow, maxBytes: number) {
@@ -821,9 +821,9 @@ export class WorkspaceKnowledgeService {
   }
 
   private scoreContributionReadiness(
-    docs: WorkspaceKnowledgePackage["docs"],
-    tests: WorkspaceKnowledgePackage["testStructure"],
-    workflows: WorkspaceKnowledgePackage["workflowFiles"],
+    docs: RepositoryKnowledgePackage["docs"],
+    tests: RepositoryKnowledgePackage["testStructure"],
+    workflows: RepositoryKnowledgePackage["workflowFiles"],
     readmeContent: string | null
   ) {
     let score = 20;
@@ -870,14 +870,14 @@ export class WorkspaceKnowledgeService {
       level: boundedScore >= 75 ? "high" : boundedScore >= 45 ? "medium" : "low",
       reasons,
       blockers
-    } satisfies WorkspaceKnowledgePackage["contributionReadiness"];
+    } satisfies RepositoryKnowledgePackage["contributionReadiness"];
   }
 
   private scoreComplexity(
     entries: FileEntry[],
-    stack: WorkspaceKnowledgePackage["detectedStack"],
-    manifests: WorkspaceKnowledgePackage["manifests"],
-    tests: WorkspaceKnowledgePackage["testStructure"]
+    stack: RepositoryKnowledgePackage["detectedStack"],
+    manifests: RepositoryKnowledgePackage["manifests"],
+    tests: RepositoryKnowledgePackage["testStructure"]
   ) {
     let score = 20;
     const reasons: string[] = [];
@@ -916,7 +916,7 @@ export class WorkspaceKnowledgeService {
       score: boundedScore,
       level: boundedScore >= 70 ? "advanced" : boundedScore >= 40 ? "intermediate" : "beginner",
       reasons: reasons.length > 0 ? reasons : ["Small deterministic context surface"]
-    } satisfies WorkspaceKnowledgePackage["complexity"];
+    } satisfies RepositoryKnowledgePackage["complexity"];
   }
 
   private pathPriority(path: string) {
@@ -937,7 +937,7 @@ export class WorkspaceKnowledgeService {
 
   private async getCachedIntelligence(userId: string, repositoryId: string) {
     const { data, error } = await this.supabase
-      .from("workspace_repository_knowledge")
+      .from("repository_intelligence_context")
       .select("id,knowledge_package")
       .eq("user_id", userId)
       .eq("repository_id", repositoryId)
@@ -1003,6 +1003,8 @@ export class WorkspaceKnowledgeService {
   }
 }
 
-export const workspaceKnowledgeService = new WorkspaceKnowledgeService();
+export const repositoryIntelligenceService = new RepositoryIntelligenceService();
+
+
 
 

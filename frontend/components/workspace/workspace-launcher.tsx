@@ -1,64 +1,29 @@
 "use client";
 
 import type { GitHubRepositorySummary } from "@openforge/shared";
-import { BrainCircuit, ExternalLink, Github, Search } from "lucide-react";
+import { ExternalLink, Github, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Card, EmptyState, ErrorState, LoadingSkeleton, PageHeader } from "@/components/common/ui";
-import {
-  fetchGitHubRepositories,
-  fetchWorkspaceKnowledge,
-  generateWorkspaceKnowledge
-} from "@/lib/api/github";
+import { Badge, Card, EmptyState, ErrorState, LoadingSkeleton, PageHeader } from "@/components/common/ui";
+import { fetchGitHubRepositories } from "@/lib/api/github";
 import { relationshipLabel } from "./workspace-components";
 
 export function WorkspaceLauncher() {
   const [repositories, setRepositories] = useState<GitHubRepositorySummary[]>([]);
-  const [intelligenceMap, setIntelligenceMap] = useState<Record<string, boolean>>({});
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [generatingRepositoryId, setGeneratingRepositoryId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadRepositories() {
       const response = await fetchGitHubRepositories();
       setRepositories(response.repositories);
-
-      const checks = await Promise.allSettled(
-        response.repositories.map(async (repository) => {
-          await fetchWorkspaceKnowledge(repository.id);
-          return repository.id;
-        })
-      );
-
-      setIntelligenceMap(
-        Object.fromEntries(
-          checks
-            .filter((check): check is PromiseFulfilledResult<string> => check.status === "fulfilled")
-            .map((check) => [check.value, true])
-        )
-      );
     }
 
     loadRepositories()
       .catch((loadError) => setError(loadError instanceof Error ? loadError.message : "Unable to load repositories"))
       .finally(() => setIsLoading(false));
   }, []);
-
-  async function handleGenerateIntelligence(repositoryId: string) {
-    setGeneratingRepositoryId(repositoryId);
-    setError(null);
-
-    try {
-      await generateWorkspaceKnowledge(repositoryId);
-      setIntelligenceMap((current) => ({ ...current, [repositoryId]: true }));
-    } catch (generateError) {
-      setError(generateError instanceof Error ? generateError.message : "Workspace knowledge generation failed");
-    } finally {
-      setGeneratingRepositoryId(null);
-    }
-  }
 
   const visibleRepositories = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -117,7 +82,6 @@ export function WorkspaceLauncher() {
       ) : (
         <div className="grid gap-4">
           {visibleRepositories.map((repository) => {
-            const hasIntelligence = Boolean(intelligenceMap[repository.id]);
             const workspaceHref = `/app/repositories/${repository.ownerLogin}/${repository.name}/workspace`;
 
             return (
@@ -126,7 +90,6 @@ export function WorkspaceLauncher() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap gap-2">
                       <Badge>{relationshipLabel(repository)}</Badge>
-                      <Badge>{hasIntelligence ? "Workspace ready" : "Workspace pending"}</Badge>
                       <Badge>{repository.primaryLanguage ?? "Unknown language"}</Badge>
                     </div>
                     <h2 className="mt-4 break-words text-xl font-semibold">{repository.fullName}</h2>
@@ -140,21 +103,9 @@ export function WorkspaceLauncher() {
                       Open in GitHub
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                     </a>
-                    {hasIntelligence ? (
-                      <Link href={workspaceHref} className="openforge-button-primary">
-                        Open Workspace
-                      </Link>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => void handleGenerateIntelligence(repository.id)}
-                        disabled={generatingRepositoryId === repository.id}
-                        variant="primary"
-                      >
-                        <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-                        {generatingRepositoryId === repository.id ? "Generating..." : "Prepare Workspace"}
-                      </Button>
-                    )}
+                    <Link href={workspaceHref} className="openforge-button-primary">
+                      Open Workspace
+                    </Link>
                   </div>
                 </div>
               </Card>

@@ -112,6 +112,7 @@ export interface GitHubSyncResponse {
   status: "completed";
   profileSynced: boolean;
   repositoriesSynced: number;
+  repositoryContextsPrepared: number;
   contributionStatsSynced: boolean;
   syncedAt: string;
 }
@@ -124,7 +125,7 @@ export interface GitHubIssueSyncResponse {
 
 export type RepositoryImportance = "high" | "medium" | "low";
 
-export interface WorkspaceKnowledgePackage {
+export interface RepositoryKnowledgePackage {
   repositoryId: string;
   fullName: string;
   provider: "github";
@@ -215,10 +216,10 @@ export interface WorkspaceKnowledgePackage {
   };
 }
 
-export interface WorkspaceKnowledgeResponse {
-  knowledgePackage: WorkspaceKnowledgePackage;
+export interface RepositoryContextResponse {
+  knowledgePackage: RepositoryKnowledgePackage;
   cached: boolean;
-  workspaceKnowledgeId: string;
+  repositoryContextId: string;
 }
 
 export interface SkillProfileSummary {
@@ -452,4 +453,5 @@ export interface AppSettings {
 export interface SettingsResponse {
   settings: AppSettings;
 }
+
 

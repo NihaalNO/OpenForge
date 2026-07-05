@@ -1,6 +1,6 @@
 "use client";
 
-import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
   BookOpenCheck,
   BrainCircuit,
@@ -143,7 +143,7 @@ function unique(items: Array<string | null | undefined>) {
   return Array.from(new Set(items.filter(Boolean) as string[]));
 }
 
-function conceptNamesFromIntelligence(intelligence: WorkspaceKnowledgePackage | null) {
+function conceptNamesFromIntelligence(intelligence: RepositoryKnowledgePackage | null) {
   if (!intelligence) return [];
 
   return unique([
@@ -159,7 +159,7 @@ function conceptNamesFromIntelligence(intelligence: WorkspaceKnowledgePackage | 
 
 function buildJourney(
   repository: GitHubRepositorySummary,
-  intelligence: WorkspaceKnowledgePackage | null,
+  intelligence: RepositoryKnowledgePackage | null,
   mission: MissionSnapshot,
   mentorHistory: UnderstandingEvent[],
   reflections: TimelineEvent[]
@@ -175,7 +175,7 @@ function buildJourney(
       label: "Repository Understood",
       description: intelligence
         ? `OpenForge found the first useful paths, docs, and review signals in ${repository.fullName}.`
-        : "Workspace Knowledge has not been generated yet.",
+        : "repository context has not been generated yet.",
       date: generatedAt,
       complete: Boolean(intelligence),
       icon: BookOpenCheck
@@ -237,7 +237,7 @@ function buildJourney(
   ];
 }
 
-function buildKnowledgeTimeline(intelligence: WorkspaceKnowledgePackage | null, mentorHistory: UnderstandingEvent[], reflections: TimelineEvent[]): KnowledgeArea[] {
+function buildKnowledgeTimeline(intelligence: RepositoryKnowledgePackage | null, mentorHistory: UnderstandingEvent[], reflections: TimelineEvent[]): KnowledgeArea[] {
   const learnedNames = unique([...mentorHistory.map((item) => item.conceptName), ...reflections.flatMap((item) => item.topics ?? [])]);
   const discoveredNames = conceptNamesFromIntelligence(intelligence);
   const names = unique([...learnedNames, ...discoveredNames]).slice(0, 8);
@@ -294,7 +294,7 @@ export function TimelineEngine({
   intelligence
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: WorkspaceKnowledgePackage | null;
+  intelligence: RepositoryKnowledgePackage | null;
 }) {
   const [activeSection, setActiveSection] = useState<TimelineSection>("journey");
   const [events, setEvents] = useState<TimelineEvent[]>([]);
@@ -515,7 +515,7 @@ function KnowledgeTimeline({ areas }: { areas: KnowledgeArea[] }) {
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="Knowledge Timeline" title="Concepts that are becoming clearer.">
-        This is a learning history. It focuses on concepts you touched through Mentor, Review, and Workspace Knowledge.
+        This is a learning history. It focuses on concepts you touched through Mentor, Review, and repository context.
       </SectionHeading>
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {areas.length ? areas.map((area) => {
@@ -771,4 +771,5 @@ function LegacyView({ stats, knowledge, journey }: { stats: Array<{ label: strin
     </WorkspaceCard>
   );
 }
+
 

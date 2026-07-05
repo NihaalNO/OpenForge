@@ -1,6 +1,6 @@
 "use client";
 
-import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
   ArrowRight,
   BookOpen,
@@ -93,7 +93,7 @@ function missionStorageKey(repositoryId: string) {
   return `openforge:mission:${repositoryId}`;
 }
 
-function allKnownPaths(intelligence: WorkspaceKnowledgePackage) {
+function allKnownPaths(intelligence: RepositoryKnowledgePackage) {
   return unique([
     ...intelligence.raw.selectedFilePaths,
     ...intelligence.docs.docFiles,
@@ -111,24 +111,24 @@ function pathsMatching(paths: string[], pattern: RegExp, limit = 6) {
   return paths.filter((path) => pattern.test(path)).slice(0, limit);
 }
 
-function readmePath(intelligence: WorkspaceKnowledgePackage) {
+function readmePath(intelligence: RepositoryKnowledgePackage) {
   return intelligence.readme.path ?? "README";
 }
 
-function docsFor(intelligence: WorkspaceKnowledgePackage, pattern?: RegExp) {
+function docsFor(intelligence: RepositoryKnowledgePackage, pattern?: RegExp) {
   const docs = unique([readmePath(intelligence), ...intelligence.docs.docFiles]);
   return pattern ? pathsMatching(docs, pattern, 4) : docs.slice(0, 4);
 }
 
-function primaryEntryPoint(intelligence: WorkspaceKnowledgePackage) {
+function primaryEntryPoint(intelligence: RepositoryKnowledgePackage) {
   return intelligence.entryPoints[0]?.path ?? intelligence.tree.importantFiles[0]?.path ?? null;
 }
 
-function primaryTests(intelligence: WorkspaceKnowledgePackage) {
+function primaryTests(intelligence: RepositoryKnowledgePackage) {
   return unique([...intelligence.testStructure.testDirectories, ...intelligence.testStructure.testFiles]).slice(0, 5);
 }
 
-function buildMentorConcepts(intelligence: WorkspaceKnowledgePackage): MentorConcept[] {
+function buildMentorConcepts(intelligence: RepositoryKnowledgePackage): MentorConcept[] {
   const paths = allKnownPaths(intelligence);
   const tests = primaryTests(intelligence);
   const entry = primaryEntryPoint(intelligence);
@@ -153,7 +153,7 @@ function buildMentorConcepts(intelligence: WorkspaceKnowledgePackage): MentorCon
       purpose: "It helps a contributor decide where a change belongs before reading individual files.",
       reasoning: entry
         ? `OpenForge found ${entry} as the clearest entry point, so architecture should start there and branch into related contracts.`
-        : "Workspace Knowledge did not find a single entry point, so architecture should start with docs and important paths.",
+        : "repository context did not find a single entry point, so architecture should start with docs and important paths.",
       whereUsed: unique([entry, ...frontendFiles, ...backendFiles, ...serviceFiles]).slice(0, 6),
       relatedModules: unique(["Frontend", "API", "Backend", "Services", "Database", "Testing"]),
       relatedDocs: docs,
@@ -189,7 +189,7 @@ function buildMentorConcepts(intelligence: WorkspaceKnowledgePackage): MentorCon
       purpose: "API contracts show what behavior the repository promises to callers.",
       reasoning: apiFiles.length
         ? `${apiFiles[0]} is a useful first stop because API files reveal request shape, auth expectations, service calls, and response shape.`
-        : "Workspace Knowledge found limited API evidence, so Mentor falls back to route, controller, and client paths.",
+        : "repository context found limited API evidence, so Mentor falls back to route, controller, and client paths.",
       whereUsed: apiFiles,
       relatedModules: unique(["Routes", "Controllers", "Services", "Frontend clients"]),
       relatedDocs: docsFor(intelligence, /api|endpoint|route|readme/i),
@@ -259,7 +259,7 @@ function buildMentorConcepts(intelligence: WorkspaceKnowledgePackage): MentorCon
       category: "structure",
       definition: "The folders, manifests, entry points, and docs that orient a contributor in this repository.",
       purpose: "Structure gives newcomers a map before details become distracting.",
-      reasoning: `Workspace Knowledge processed ${intelligence.tree.processedEntries} entries and selected ${intelligence.raw.selectedFilePaths.length} paths for closer reading.`,
+      reasoning: `repository context processed ${intelligence.tree.processedEntries} entries and selected ${intelligence.raw.selectedFilePaths.length} paths for closer reading.`,
       whereUsed: unique([entry, ...intelligence.tree.directories.map((directory) => directory.path)]).slice(0, 6),
       relatedModules: unique(["Documentation", "Frontend", "Backend", "Developer Experience"]),
       relatedDocs: docs,
@@ -367,13 +367,11 @@ export function MentorEngine({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate,
   onOpenExplorer
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: WorkspaceKnowledgePackage | null;
+  intelligence: RepositoryKnowledgePackage | null;
   isGenerating: boolean;
-  onRegenerate: () => void;
   onOpenExplorer: () => void;
 }) {
   const { mentorContext, setMentorContext } = useWorkspace();
@@ -421,14 +419,8 @@ export function MentorEngine({
   if (!intelligence) {
     return (
       <EmptyState
-        title="Mentor needs Workspace Knowledge"
+        title="Mentor needs repository context"
         description={`${repository.fullName} needs repository understanding before Mentor can teach architecture, context, gaps, and next questions.`}
-        action={
-          <Button type="button" onClick={onRegenerate} disabled={isGenerating} variant="primary">
-            <Sparkles className={cn("h-4 w-4", isGenerating && "animate-spin")} aria-hidden="true" />
-            {isGenerating ? "Understanding repository..." : "Prepare Workspace"}
-          </Button>
-        }
       />
     );
   }
@@ -623,7 +615,7 @@ function MissionMentorPanel({
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="Mission Mentoring" title="Contextual guidance for the active mission.">
-        Mentor is using mission progress and workspace knowledge together, so the next explanation stays tied to {repository.fullName}.
+        Mentor is using mission progress and repository context together, so the next explanation stays tied to {repository.fullName}.
       </SectionHeading>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {prompts.map((prompt) => (
@@ -840,4 +832,5 @@ function MentorList({ title, items }: { title: string; items: string[] }) {
     </section>
   );
 }
+
 

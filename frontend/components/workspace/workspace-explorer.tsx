@@ -1,6 +1,6 @@
 "use client";
 
-import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
   ArrowDown,
   ArrowRight,
@@ -81,7 +81,7 @@ function formatLevel(value?: string | null) {
   return value ? value.replace(/_/g, " ") : "unknown";
 }
 
-function allKnownPaths(intelligence: WorkspaceKnowledgePackage) {
+function allKnownPaths(intelligence: RepositoryKnowledgePackage) {
   return unique([
     ...intelligence.raw.selectedFilePaths,
     ...intelligence.docs.docFiles,
@@ -103,24 +103,24 @@ function fallbackList(items: string[], fallback: string) {
   return items.length ? items : [fallback];
 }
 
-function readmePath(intelligence: WorkspaceKnowledgePackage) {
+function readmePath(intelligence: RepositoryKnowledgePackage) {
   return intelligence.readme.path ?? "README";
 }
 
-function primaryEntryPoint(intelligence: WorkspaceKnowledgePackage) {
+function primaryEntryPoint(intelligence: RepositoryKnowledgePackage) {
   return intelligence.entryPoints[0]?.path ?? intelligence.tree.importantFiles[0]?.path ?? null;
 }
 
-function primaryTests(intelligence: WorkspaceKnowledgePackage) {
+function primaryTests(intelligence: RepositoryKnowledgePackage) {
   return unique([...intelligence.testStructure.testDirectories, ...intelligence.testStructure.testFiles]).slice(0, 5);
 }
 
-function docsFor(intelligence: WorkspaceKnowledgePackage, pattern?: RegExp) {
+function docsFor(intelligence: RepositoryKnowledgePackage, pattern?: RegExp) {
   const docs = unique([readmePath(intelligence), ...intelligence.docs.docFiles]);
   return pattern ? pathsMatching(docs, pattern, 4) : docs.slice(0, 4);
 }
 
-function conceptExists(intelligence: WorkspaceKnowledgePackage, id: ConceptKind, paths: string[]) {
+function conceptExists(intelligence: RepositoryKnowledgePackage, id: ConceptKind, paths: string[]) {
   if (id === "documentation") return Boolean(intelligence.readme.content || intelligence.docs.docFiles.length);
   if (id === "frontend") return paths.some((path) => /frontend|app\/|pages\/|components\/|next\.config|vite|react/i.test(path)) || intelligence.detectedStack.frameworks.some((item) => /next|react|vue|svelte|angular|vite/i.test(item));
   if (id === "backend") return paths.some((path) => /backend|server|api\/|routes|controllers|express/i.test(path)) || intelligence.detectedStack.frameworks.some((item) => /express|fastify|nestjs|koa|hono/i.test(item));
@@ -135,7 +135,7 @@ function conceptExists(intelligence: WorkspaceKnowledgePackage, id: ConceptKind,
   return paths.some((path) => /infra|docker|compose|workflow|terraform|k8s|helm/i.test(path));
 }
 
-function buildConcepts(intelligence: WorkspaceKnowledgePackage): ConceptNode[] {
+function buildConcepts(intelligence: RepositoryKnowledgePackage): ConceptNode[] {
   const paths = allKnownPaths(intelligence);
   const tests = primaryTests(intelligence);
   const manifests = intelligence.manifests.map((manifest) => manifest.path);
@@ -318,7 +318,7 @@ function buildConcepts(intelligence: WorkspaceKnowledgePackage): ConceptNode[] {
   return definitions.filter((concept) => concept.strength === "primary" || conceptExists(intelligence, concept.id, paths));
 }
 
-function buildReadingJourney(intelligence: WorkspaceKnowledgePackage, concepts: ConceptNode[]): ReadingStep[] {
+function buildReadingJourney(intelligence: RepositoryKnowledgePackage, concepts: ConceptNode[]): ReadingStep[] {
   const conceptIds = new Set(concepts.map((concept) => concept.id));
   const entry = primaryEntryPoint(intelligence);
   const tests = primaryTests(intelligence)[0];
@@ -336,7 +336,7 @@ function buildReadingJourney(intelligence: WorkspaceKnowledgePackage, concepts: 
   ].filter(Boolean) as ReadingStep[];
 }
 
-function buildContributionAreas(intelligence: WorkspaceKnowledgePackage, concepts: ConceptNode[]): ContributionArea[] {
+function buildContributionAreas(intelligence: RepositoryKnowledgePackage, concepts: ConceptNode[]): ContributionArea[] {
   const has = (id: ConceptKind) => concepts.some((concept) => concept.id === id);
   const level = formatLevel(intelligence.complexity.level);
 
@@ -418,13 +418,11 @@ export function WorkspaceExplorer({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate,
   onAskMentor
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: WorkspaceKnowledgePackage | null;
+  intelligence: RepositoryKnowledgePackage | null;
   isGenerating: boolean;
-  onRegenerate: () => void;
   onAskMentor?: (concept: ConceptNode) => void;
 }) {
   const [activeView, setActiveView] = useState<ExplorerView>("architecture");
@@ -439,14 +437,8 @@ export function WorkspaceExplorer({
   if (!intelligence) {
     return (
       <EmptyState
-        title="Explorer needs Workspace Knowledge"
-        description={`${repository.fullName} can become an architecture map once OpenForge has analyzed the repository.`}
-        action={
-          <Button type="button" onClick={onRegenerate} disabled={isGenerating} variant="primary">
-            <Sparkles className={cn("h-4 w-4", isGenerating && "animate-spin")} aria-hidden="true" />
-            {isGenerating ? "Understanding repository..." : "Prepare Workspace"}
-          </Button>
-        }
+        title="Explorer needs repository context"
+        description={isGenerating ? "Understanding Repository..." : `${repository.fullName} will become an architecture map once repository context is ready.`}
       />
     );
   }
@@ -478,7 +470,7 @@ export function WorkspaceExplorer({
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />
                 Teach Me This Repository
               </Button>
-              <p className="mt-3 text-xs leading-5 text-muted-foreground">Generates a deterministic learning path from Workspace Knowledge.</p>
+              <p className="mt-3 text-xs leading-5 text-muted-foreground">Generates a deterministic learning path from repository context.</p>
             </div>
           </div>
         </WorkspaceCard>
@@ -638,7 +630,7 @@ function ReadingJourneyView({
   return (
     <WorkspaceCard>
       <SectionTitle eyebrow={learningMode ? "Learning Mode" : "Reading Journey"} title="A guided path through the repository.">
-        This order is generated from Workspace Knowledge so contributors learn architecture before navigation.
+        This order is generated from repository context so contributors learn architecture before navigation.
       </SectionTitle>
       {learningMode ? (
         <div className="mt-5 rounded-[18px] border border-brand-violet/20 bg-soft-blue-wash/55 p-4">
@@ -841,4 +833,5 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
     </section>
   );
 }
+
 

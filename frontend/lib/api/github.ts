@@ -6,7 +6,7 @@ import type {
   GitHubRepositoriesResponse,
   GitHubRepositoryResponse,
   GitHubSyncResponse,
-  WorkspaceKnowledgeResponse
+  RepositoryContextResponse
 } from "@openforge/shared";
 import { apiRequest } from "./client";
 
@@ -67,19 +67,10 @@ export function fetchGitHubIssues(owner: string, repo: string) {
   );
 }
 
-export function fetchWorkspaceKnowledge(repositoryId: string) {
-  return apiRequest<WorkspaceKnowledgeResponse>(
-    `/repositories/${encodeURIComponent(repositoryId)}/workspace-knowledge`
+export function fetchRepositoryContext(repositoryId: string) {
+  return apiRequest<RepositoryContextResponse>(
+    `/repositories/${encodeURIComponent(repositoryId)}/context`
   );
 }
 
-export function generateWorkspaceKnowledge(repositoryId: string, regenerate = false) {
-  return apiRequest<WorkspaceKnowledgeResponse>(
-    `/repositories/${encodeURIComponent(repositoryId)}/workspace-knowledge/generate`,
-    {
-      method: "POST",
-      body: JSON.stringify({ regenerate })
-    }
-  );
-}
 

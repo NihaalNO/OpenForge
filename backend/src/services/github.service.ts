@@ -15,6 +15,7 @@ import {
 } from "../lib/github-client.js";
 import { ConflictError, NotFoundError } from "../lib/http-error.js";
 import { getSupabaseServiceClient } from "../lib/supabase.js";
+import { repositoryIntelligenceService } from "./repository-intelligence.service.js";
 
 interface GitHubAccountRow {
   user_id: string;
@@ -257,7 +258,7 @@ export class GitHubService {
 
     const repositories = await this.fetchAuthenticatedRepositories(client, profile.login);
     const syncableRepositories = repositories.filter((item) => !item.repository.archived);
-    const [repositoriesSynced, contributionStatsSynced] = await Promise.all([
+    const [repositorySync, contributionStatsSynced] = await Promise.all([
       this.syncRepositoryPayloads(userId, client, syncableRepositories),
       this.syncContributionStats(userId, client)
     ]);
@@ -266,7 +267,8 @@ export class GitHubService {
     return {
       status: "completed",
       profileSynced: true,
-      repositoriesSynced,
+      repositoriesSynced: repositorySync.repositoriesSynced,
+      repositoryContextsPrepared: repositorySync.repositoryContextsPrepared,
       contributionStatsSynced,
       syncedAt
     };
@@ -420,15 +422,21 @@ export class GitHubService {
     repositories: RepositoryWithRelationship[]
   ) {
     if (repositories.length === 0) {
-      return 0;
+      return {
+        repositoriesSynced: 0,
+        repositoryContextsPrepared: 0
+      };
     }
 
     const payloads = await mapWithConcurrency(repositories, 8, (item) =>
       this.buildRepositoryUpsertPayload(client, item.repository, item.relationshipType)
     );
-    const { error } = await this.supabase.from("github_repositories").upsert(payloads, {
-      onConflict: "github_repo_id"
-    });
+    const { data, error } = await this.supabase
+      .from("github_repositories")
+      .upsert(payloads, {
+        onConflict: "github_repo_id"
+      })
+      .select("id");
 
     if (error) {
       throw error;
@@ -436,7 +444,20 @@ export class GitHubService {
 
     await this.updateRateLimit(userId, client);
 
-    return payloads.length;
+    const repositoryIds = ((data ?? []) as Array<{ id: string }>).map((repository) => repository.id);
+    const contextResults = await mapWithConcurrency(repositoryIds, 3, async (repositoryId) => {
+      try {
+        await repositoryIntelligenceService.buildRepositoryIntelligence(userId, repositoryId);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+    return {
+      repositoriesSynced: payloads.length,
+      repositoryContextsPrepared: contextResults.filter(Boolean).length
+    };
   }
 
   private async buildRepositoryUpsertPayload(

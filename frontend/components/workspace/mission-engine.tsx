@@ -1,6 +1,6 @@
 "use client";
 
-import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
   AlertTriangle,
   ArrowDown,
@@ -116,7 +116,7 @@ function formatLevel(value?: string | null) {
   return value.replace(/_/g, " ");
 }
 
-function allKnownPaths(intelligence: WorkspaceKnowledgePackage) {
+function allKnownPaths(intelligence: RepositoryKnowledgePackage) {
   return unique([
     ...intelligence.raw.selectedFilePaths,
     ...intelligence.docs.docFiles,
@@ -134,36 +134,36 @@ function pathsMatching(paths: string[], pattern: RegExp, limit = 5) {
   return paths.filter((path) => pattern.test(path)).slice(0, limit);
 }
 
-function readmePath(intelligence: WorkspaceKnowledgePackage) {
+function readmePath(intelligence: RepositoryKnowledgePackage) {
   return intelligence.readme.path ?? "README";
 }
 
-function docsFor(intelligence: WorkspaceKnowledgePackage, pattern?: RegExp) {
+function docsFor(intelligence: RepositoryKnowledgePackage, pattern?: RegExp) {
   const docs = unique([readmePath(intelligence), ...intelligence.docs.docFiles]);
   return pattern ? pathsMatching(docs, pattern, 4) : docs.slice(0, 4);
 }
 
-function primaryEntryPoint(intelligence: WorkspaceKnowledgePackage) {
+function primaryEntryPoint(intelligence: RepositoryKnowledgePackage) {
   return intelligence.entryPoints[0]?.path ?? intelligence.tree.importantFiles[0]?.path ?? null;
 }
 
-function primaryTests(intelligence: WorkspaceKnowledgePackage) {
+function primaryTests(intelligence: RepositoryKnowledgePackage) {
   return unique([...intelligence.testStructure.testDirectories, ...intelligence.testStructure.testFiles]).slice(0, 5);
 }
 
-function confidenceLevel(intelligence: WorkspaceKnowledgePackage) {
+function confidenceLevel(intelligence: RepositoryKnowledgePackage) {
   if (!intelligence.sourceLimits.truncated && intelligence.readme.content && intelligence.tree.processedEntries > 0) return "High";
   if (!intelligence.sourceLimits.truncated || intelligence.readme.content) return "Medium";
   return "Developing";
 }
 
-function estimatedDuration(intelligence: WorkspaceKnowledgePackage) {
+function estimatedDuration(intelligence: RepositoryKnowledgePackage) {
   if (intelligence.complexity.level === "advanced") return "4-6 hours";
   if (intelligence.complexity.level === "intermediate") return "2-4 hours";
   return "60-120 minutes";
 }
 
-function expectedExperience(intelligence: WorkspaceKnowledgePackage) {
+function expectedExperience(intelligence: RepositoryKnowledgePackage) {
   if (intelligence.complexity.level === "advanced") return "Advanced contributor";
   if (intelligence.complexity.level === "intermediate") return "Comfortable with the detected stack";
   return "New contributor with setup patience";
@@ -173,7 +173,7 @@ function concept(name: string, summary: string, files: string[]): MissionConcept
   return files.length ? { name, summary, files } : null;
 }
 
-function buildMission(repository: GitHubRepositorySummary, intelligence: WorkspaceKnowledgePackage): MissionModel {
+function buildMission(repository: GitHubRepositorySummary, intelligence: RepositoryKnowledgePackage): MissionModel {
   const paths = allKnownPaths(intelligence);
   const tests = primaryTests(intelligence);
   const docs = docsFor(intelligence);
@@ -361,13 +361,11 @@ export function MissionEngine({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate,
   onAskMentor
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: WorkspaceKnowledgePackage | null;
+  intelligence: RepositoryKnowledgePackage | null;
   isGenerating: boolean;
-  onRegenerate: () => void;
   onAskMentor?: (prompt: string) => void;
 }) {
   const [activeSection, setActiveSection] = useState<MissionSectionId>("brief");
@@ -416,14 +414,8 @@ export function MissionEngine({
   if (!intelligence || !mission) {
     return (
       <EmptyState
-        title="Mission needs Workspace Knowledge"
+        title="Mission needs repository context"
         description={`${repository.fullName} needs repository understanding before Mission can guide a contributor through preparation, implementation, and pull request readiness.`}
-        action={
-          <Button type="button" onClick={onRegenerate} disabled={isGenerating} variant="primary">
-            <PackageCheck className={cn("h-4 w-4", isGenerating && "animate-spin")} aria-hidden="true" />
-            {isGenerating ? "Understanding repository..." : "Prepare Workspace"}
-          </Button>
-        }
       />
     );
   }
@@ -877,4 +869,5 @@ function AssistantList({ icon: Icon, title, items }: { icon: LucideIcon; title: 
     </section>
   );
 }
+
 

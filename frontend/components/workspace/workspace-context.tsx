@@ -1,11 +1,10 @@
 "use client";
 
-import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   fetchGitHubRepository,
-  fetchWorkspaceKnowledge,
-  generateWorkspaceKnowledge
+  fetchRepositoryContext
 } from "@/lib/api/github";
 
 export type WorkspaceStatus = "loading" | "ready" | "empty" | "error";
@@ -21,7 +20,7 @@ export interface WorkspaceMentorContext {
 
 interface WorkspaceContextValue {
   repository: GitHubRepositorySummary | null;
-  intelligence: WorkspaceKnowledgePackage | null;
+  intelligence: RepositoryKnowledgePackage | null;
   isLoading: boolean;
   isGenerating: boolean;
   status: WorkspaceStatus;
@@ -31,7 +30,6 @@ interface WorkspaceContextValue {
   futureActivity: null;
   setMentorContext: (context: WorkspaceMentorContext) => void;
   retry: () => Promise<void>;
-  regenerateWorkspaceKnowledge: () => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -46,9 +44,9 @@ export function WorkspaceProvider({
   children: ReactNode;
 }) {
   const [repository, setRepository] = useState<GitHubRepositorySummary | null>(null);
-  const [intelligence, setIntelligence] = useState<WorkspaceKnowledgePackage | null>(null);
+  const [intelligence, setIntelligence] = useState<RepositoryKnowledgePackage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mentorContext, setMentorContext] = useState<WorkspaceMentorContext>({ source: "workspace" });
 
@@ -64,7 +62,7 @@ export function WorkspaceProvider({
       setRepository(repositoryResponse.repository);
 
       try {
-        const intelligenceResponse = await fetchWorkspaceKnowledge(repositoryResponse.repository.id);
+        const intelligenceResponse = await fetchRepositoryContext(repositoryResponse.repository.id);
         if (active) {
           setIntelligence(intelligenceResponse.knowledgePackage);
         }
@@ -95,22 +93,6 @@ export function WorkspaceProvider({
     };
   }, [owner, repo]);
 
-  async function regenerateWorkspaceKnowledge() {
-    if (!repository) return;
-
-    setIsGenerating(true);
-    setError(null);
-
-    try {
-      const response = await generateWorkspaceKnowledge(repository.id, Boolean(intelligence));
-      setIntelligence(response.knowledgePackage);
-    } catch (generateError) {
-      setError(generateError instanceof Error ? generateError.message : "Workspace knowledge generation failed");
-    } finally {
-      setIsGenerating(false);
-    }
-  }
-
   const value = useMemo<WorkspaceContextValue>(() => {
     const status: WorkspaceStatus = isLoading ? "loading" : error ? "error" : intelligence ? "ready" : "empty";
 
@@ -125,8 +107,7 @@ export function WorkspaceProvider({
       mentorContext,
       futureActivity: null,
       setMentorContext,
-      retry: () => loadWorkspace(),
-      regenerateWorkspaceKnowledge
+      retry: () => loadWorkspace()
     };
   }, [repository, intelligence, isLoading, isGenerating, error, mentorContext]);
 
@@ -142,4 +123,5 @@ export function useWorkspace() {
 
   return context;
 }
+
 

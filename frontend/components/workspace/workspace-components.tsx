@@ -121,8 +121,8 @@ export function WorkspaceError({ message }: { message: string }) {
 }
 
 export function WorkspaceEmptyState({
-  title = "Workspace knowledge not generated",
-  description = "Generate Workspace Knowledge to prepare this workspace."
+  title = "Preparing Workspace",
+  description = "Understanding Repository..."
 }: {
   title?: string;
   description?: string;

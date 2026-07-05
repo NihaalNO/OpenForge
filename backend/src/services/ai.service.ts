@@ -10,7 +10,7 @@ import { ConflictError, NotFoundError } from "../lib/http-error.js";
 import { getSupabaseServiceClient } from "../lib/supabase.js";
 import { env } from "../config/env.js";
 import { aiProviderService } from "./ai-provider.service.js";
-import { workspaceKnowledgeService } from "./workspace-knowledge.service.js";
+import { repositoryIntelligenceService } from "./repository-intelligence.service.js";
 
 type AnalysisType = "issue_explanation" | "roadmap" | "contribution_plan";
 
@@ -228,7 +228,7 @@ ${JSON.stringify(contributionStats, null, 2)}`,
       return cached;
     }
 
-    const knowledgePackage = await workspaceKnowledgeService.getLatestKnowledgePackage(userId, repository.id);
+    const knowledgePackage = await repositoryIntelligenceService.getLatestKnowledgePackage(userId, repository.id);
 
     return this.generateAndLog<AiContributionPlan>({
       userId,
@@ -499,4 +499,5 @@ ${JSON.stringify(issue, null, 2)}`,
 }
 
 export const aiService = new AiService();
+
 

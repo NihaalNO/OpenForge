@@ -1,4 +1,4 @@
-create table if not exists public.workspace_repository_knowledge (
+create table if not exists public.repository_intelligence_context (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users(id) on delete cascade,
   repository_id uuid not null references public.github_repositories(id) on delete cascade,
@@ -19,7 +19,7 @@ create table if not exists public.workspace_repository_knowledge (
 do $$
 begin
   if to_regclass('public.repository_intelligence') is not null then
-    insert into public.workspace_repository_knowledge (
+    insert into public.repository_intelligence_context (
       id,
       user_id,
       repository_id,
@@ -65,33 +65,35 @@ begin
   end if;
 end $$;
 
-create index if not exists idx_workspace_repository_knowledge_user_generated
-  on public.workspace_repository_knowledge(user_id, generated_at desc);
+create index if not exists idx_repository_intelligence_context_user_generated
+  on public.repository_intelligence_context(user_id, generated_at desc);
 
-create index if not exists idx_workspace_repository_knowledge_repository_status
-  on public.workspace_repository_knowledge(repository_id, status);
+create index if not exists idx_repository_intelligence_context_repository_status
+  on public.repository_intelligence_context(repository_id, status);
 
-create index if not exists idx_workspace_repository_knowledge_detected_stack
-  on public.workspace_repository_knowledge using gin(detected_stack);
+create index if not exists idx_repository_intelligence_context_detected_stack
+  on public.repository_intelligence_context using gin(detected_stack);
 
-drop trigger if exists set_workspace_repository_knowledge_updated_at on public.workspace_repository_knowledge;
-create trigger set_workspace_repository_knowledge_updated_at
-  before update on public.workspace_repository_knowledge
+drop trigger if exists set_repository_intelligence_context_updated_at on public.repository_intelligence_context;
+create trigger set_repository_intelligence_context_updated_at
+  before update on public.repository_intelligence_context
   for each row
   execute function public.set_updated_at();
 
-alter table public.workspace_repository_knowledge enable row level security;
+alter table public.repository_intelligence_context enable row level security;
 
-drop policy if exists "Users can read own workspace knowledge" on public.workspace_repository_knowledge;
-drop policy if exists "Users can manage own workspace knowledge" on public.workspace_repository_knowledge;
+drop policy if exists "Users can read own repository context" on public.repository_intelligence_context;
+drop policy if exists "Users can manage own repository context" on public.repository_intelligence_context;
+drop policy if exists "Users can read own workspace knowledge" on public.repository_intelligence_context;
+drop policy if exists "Users can manage own workspace knowledge" on public.repository_intelligence_context;
 
-create policy "Users can read own workspace knowledge"
-  on public.workspace_repository_knowledge
+create policy "Users can read own repository context"
+  on public.repository_intelligence_context
   for select
   using (auth.uid() = user_id);
 
-create policy "Users can manage own workspace knowledge"
-  on public.workspace_repository_knowledge
+create policy "Users can manage own repository context"
+  on public.repository_intelligence_context
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
@@ -114,3 +116,4 @@ begin
 end $$;
 
 drop table if exists public.repository_intelligence;
+

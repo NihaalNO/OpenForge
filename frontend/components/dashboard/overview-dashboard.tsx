@@ -66,7 +66,7 @@ export function OverviewDashboard() {
         actions={
           <Button type="button" onClick={handleSync} disabled={isSyncing} variant="primary">
             <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} aria-hidden="true" />
-            {isSyncing ? "Syncing" : "Sync GitHub"}
+            {isSyncing ? "Preparing Workspace..." : "Sync GitHub"}
           </Button>
         }
       />

@@ -1,14 +1,12 @@
 "use client";
 
 import type { GitHubRepositorySummary } from "@openforge/shared";
-import { BrainCircuit, GitFork, RefreshCw, Star } from "lucide-react";
+import { GitFork, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingSkeleton, PageHeader } from "@/components/common/ui";
 import {
   fetchGitHubRepositories,
-  fetchWorkspaceKnowledge,
-  generateWorkspaceKnowledge,
   syncGitHubData
 } from "@/lib/api/github";
 import { cn } from "@/lib/utils";
@@ -48,27 +46,12 @@ export function RepositoryList() {
   const [activeFilter, setActiveFilter] = useState<RepositoryFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [intelligenceMap, setIntelligenceMap] = useState<Record<string, boolean>>({});
-  const [generatingRepositoryId, setGeneratingRepositoryId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadRepositories() {
     const response = await fetchGitHubRepositories();
     setRepositories(response.repositories);
-
-    const checks = await Promise.allSettled(
-      response.repositories.map(async (repository) => {
-        await fetchWorkspaceKnowledge(repository.id);
-        return repository.id;
-      })
-    );
-    setIntelligenceMap(
-      Object.fromEntries(
-        checks
-          .filter((check): check is PromiseFulfilledResult<string> => check.status === "fulfilled")
-          .map((check) => [check.value, true])
-      )
-    );
+    return response.repositories;
   }
 
   async function handleSync() {
@@ -77,25 +60,16 @@ export function RepositoryList() {
 
     try {
       await syncGitHubData();
-      await loadRepositories();
+      const syncedRepositories = await loadRepositories();
+      const firstRepository = syncedRepositories[0];
+
+      if (firstRepository) {
+        window.location.href = `/app/repositories/${firstRepository.ownerLogin}/${firstRepository.name}/workspace`;
+      }
     } catch (syncError) {
       setError(syncError instanceof Error ? syncError.message : "Repository sync failed");
     } finally {
       setIsSyncing(false);
-    }
-  }
-
-  async function handleGenerateIntelligence(repositoryId: string) {
-    setGeneratingRepositoryId(repositoryId);
-    setError(null);
-
-    try {
-      await generateWorkspaceKnowledge(repositoryId);
-      setIntelligenceMap((current) => ({ ...current, [repositoryId]: true }));
-    } catch (generateError) {
-      setError(generateError instanceof Error ? generateError.message : "Workspace knowledge generation failed");
-    } finally {
-      setGeneratingRepositoryId(null);
     }
   }
 
@@ -132,7 +106,7 @@ export function RepositoryList() {
         actions={
           <Button type="button" onClick={handleSync} disabled={isSyncing} variant="primary">
             <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} aria-hidden="true" />
-            {isSyncing ? "Syncing..." : "Sync repositories"}
+            {isSyncing ? "Preparing Workspace..." : "Sync repositories"}
           </Button>
         }
       />
@@ -207,21 +181,9 @@ export function RepositoryList() {
                 <a href={repository.htmlUrl} target="_blank" rel="noreferrer" className="openforge-button">
                   Open in GitHub
                 </a>
-                {intelligenceMap[repository.id] ? (
-                  <Link href={`/app/repositories/${repository.ownerLogin}/${repository.name}/workspace`} className="openforge-button-primary">
-                    Open Workspace
-                  </Link>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => void handleGenerateIntelligence(repository.id)}
-                    disabled={generatingRepositoryId === repository.id}
-                    variant="primary"
-                  >
-                    <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-                    {generatingRepositoryId === repository.id ? "Generating..." : "Prepare Workspace"}
-                  </Button>
-                )}
+                <Link href={`/app/repositories/${repository.ownerLogin}/${repository.name}/workspace`} className="openforge-button-primary">
+                  Open Workspace
+                </Link>
               </div>
             </Card>
           ))}
