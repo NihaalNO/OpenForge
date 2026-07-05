@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { env } from "../config/env.js";
 import { getJwtExpiresAt } from "../lib/jwt.js";
 import { UnauthorizedError } from "../lib/http-error.js";
 import { getSupabaseAuthClient } from "../lib/supabase.js";
@@ -13,11 +14,30 @@ function getBearerToken(req: Request) {
   return authorization.slice("Bearer ".length).trim();
 }
 
-export async function authMiddleware(req: Request, _res: Response, next: NextFunction) {
+function isBrowserNavigation(req: Request) {
+  return (
+    req.method === "GET" &&
+    (req.header("sec-fetch-mode") === "navigate" || req.header("accept")?.includes("text/html"))
+  );
+}
+
+function redirectToLogin(req: Request, res: Response) {
+  const nextPath = req.originalUrl.startsWith("/api") ? "/app/repositories" : req.originalUrl;
+  const loginUrl = new URL("/login", env.FRONTEND_URL);
+  loginUrl.searchParams.set("next", nextPath);
+  res.redirect(loginUrl.toString());
+}
+
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const token = getBearerToken(req);
 
     if (!token) {
+      if (isBrowserNavigation(req)) {
+        redirectToLogin(req, res);
+        return;
+      }
+
       throw new UnauthorizedError();
     }
 
