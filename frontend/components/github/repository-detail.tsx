@@ -4,9 +4,7 @@ import type { GitHubRepositorySummary } from "@openforge/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge, Card, ErrorState, LoadingSkeleton, PageHeader } from "@/components/common/ui";
-import { RepositoryAiPanel } from "@/components/ai/repository-ai-panel";
 import { fetchGitHubRepository } from "@/lib/api/github";
-import { RepositoryIntelligencePanel } from "./repository-intelligence-panel";
 
 interface RepositoryDetailProps {
   owner: string;
@@ -92,9 +90,7 @@ export function RepositoryDetail({ owner, repo }: RepositoryDetailProps) {
         </div>
       </Card>
 
-      <RepositoryIntelligencePanel repositoryId={repository.id} />
-
-      <RepositoryAiPanel repositoryId={repository.id} />
     </div>
   );
 }
+

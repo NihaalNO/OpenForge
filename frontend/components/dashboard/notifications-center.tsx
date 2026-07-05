@@ -54,7 +54,7 @@ export function NotificationsCenter() {
       <PageHeader
         eyebrow="Notifications"
         title="Notification center"
-        description="Updates for GitHub syncs, repository analysis, generated plans, and roadmap work."
+        description="Updates for GitHub syncs, workspace preparation, generated plans, and roadmap work."
         actions={
           <Button type="button" onClick={() => void markAllRead()}>
             Mark all as read
@@ -65,7 +65,7 @@ export function NotificationsCenter() {
       {error ? <ErrorState message={error} /> : null}
 
       {notifications.length === 0 ? (
-        <EmptyState title="No notifications yet" description="Useful updates will appear here after syncs, analyses, and generated plans." />
+        <EmptyState title="No notifications yet" description="Useful updates will appear here after syncs, updates, and generated plans." />
       ) : (
         <Card className="space-y-3">
           {notifications.map((notification) => (
@@ -105,3 +105,4 @@ export function NotificationsCenter() {
     </div>
   );
 }
+

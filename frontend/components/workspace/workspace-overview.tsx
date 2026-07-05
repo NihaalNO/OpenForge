@@ -1,6 +1,6 @@
 "use client";
 
-import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
 import {
   AlertTriangle,
   ArrowDown,
@@ -35,7 +35,7 @@ type Tone = "positive" | "prepare" | "blocked";
 type Rating = "Strong" | "Promising" | "Needs care";
 
 function formatDate(value?: string | null) {
-  if (!value) return "Not analyzed yet";
+  if (!value) return "Not prepared yet";
 
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -63,7 +63,7 @@ function firstMatch(paths: string[], pattern: RegExp) {
   return paths.find((path) => pattern.test(path)) ?? null;
 }
 
-function allKnownPaths(intelligence: RepositoryKnowledgePackage) {
+function allKnownPaths(intelligence: WorkspaceKnowledgePackage) {
   return [
     ...intelligence.raw.selectedFilePaths,
     ...intelligence.docs.docFiles,
@@ -75,19 +75,19 @@ function allKnownPaths(intelligence: RepositoryKnowledgePackage) {
   ];
 }
 
-function readmePath(intelligence: RepositoryKnowledgePackage) {
+function readmePath(intelligence: WorkspaceKnowledgePackage) {
   return intelligence.readme.path ?? "README";
 }
 
-function primaryEntryPoint(intelligence: RepositoryKnowledgePackage) {
+function primaryEntryPoint(intelligence: WorkspaceKnowledgePackage) {
   return intelligence.entryPoints[0]?.path ?? intelligence.tree.importantFiles[0]?.path ?? null;
 }
 
-function primaryTestPath(intelligence: RepositoryKnowledgePackage) {
+function primaryTestPath(intelligence: WorkspaceKnowledgePackage) {
   return intelligence.testStructure.testDirectories[0] ?? intelligence.testStructure.testFiles[0] ?? null;
 }
 
-function primaryModule(intelligence: RepositoryKnowledgePackage) {
+function primaryModule(intelligence: WorkspaceKnowledgePackage) {
   const paths = allKnownPaths(intelligence);
   const authPath = firstMatch(paths, /(^|\/|\\)(auth|authentication|session|oauth|login|jwt)(\/|\\|\.|$)/i);
 
@@ -100,13 +100,13 @@ function primaryModule(intelligence: RepositoryKnowledgePackage) {
   );
 }
 
-function confidenceLevel(intelligence: RepositoryKnowledgePackage) {
+function confidenceLevel(intelligence: WorkspaceKnowledgePackage) {
   if (!intelligence.sourceLimits.truncated && intelligence.readme.content && intelligence.tree.processedEntries > 0) return "High";
   if (!intelligence.sourceLimits.truncated || intelligence.readme.content) return "Medium";
   return "Developing";
 }
 
-function readinessModel(intelligence: RepositoryKnowledgePackage): {
+function readinessModel(intelligence: WorkspaceKnowledgePackage): {
   answer: string;
   tone: Tone;
   reasons: string[];
@@ -167,7 +167,7 @@ function toneIcon(tone: Tone) {
   return AlertTriangle;
 }
 
-function openForgeInsight(intelligence: RepositoryKnowledgePackage) {
+function openForgeInsight(intelligence: WorkspaceKnowledgePackage) {
   const paths = allKnownPaths(intelligence);
   const docsPath = firstMatch(paths, /(^|\/|\\)docs?(\/|\\|$)|readme|contributing/i);
   const testsPath = primaryTestPath(intelligence);
@@ -192,7 +192,7 @@ function openForgeInsight(intelligence: RepositoryKnowledgePackage) {
   return `Begin with ${readmePath(intelligence)} and keep the first change close to ${primaryEntryPoint(intelligence) ?? "the clearest entry point"}. This repository will make more sense after one small, verified path through it.`;
 }
 
-function technologyOverview(intelligence: RepositoryKnowledgePackage) {
+function technologyOverview(intelligence: WorkspaceKnowledgePackage) {
   const paths = allKnownPaths(intelligence);
   const frameworks = intelligence.detectedStack.frameworks;
   const authPath = firstMatch(paths, /(^|\/|\\)(auth|authentication|session|oauth|login|jwt|supabase)(\/|\\|\.|$)/i);
@@ -232,7 +232,7 @@ function ratingWidth(rating: Rating) {
 
 function recommendationRatings(
   repository: GitHubRepositorySummary,
-  intelligence: RepositoryKnowledgePackage
+  intelligence: WorkspaceKnowledgePackage
 ): Array<{ label: string; rating: Rating; explanation: string }> {
   const architectureSignals = [
     intelligence.entryPoints.length > 0,
@@ -298,7 +298,7 @@ function recommendationRatings(
   ];
 }
 
-function firstFifteenMinutes(intelligence: RepositoryKnowledgePackage) {
+function firstFifteenMinutes(intelligence: WorkspaceKnowledgePackage) {
   const module = primaryModule(intelligence);
 
   return [
@@ -310,7 +310,7 @@ function firstFifteenMinutes(intelligence: RepositoryKnowledgePackage) {
   ];
 }
 
-function mentorship(intelligence: RepositoryKnowledgePackage) {
+function mentorship(intelligence: WorkspaceKnowledgePackage) {
   const module = primaryModule(intelligence) ?? primaryEntryPoint(intelligence) ?? readmePath(intelligence);
   const testPath = primaryTestPath(intelligence);
   const postpone = intelligence.detectedStack.deployment.length
@@ -346,7 +346,7 @@ export function WelcomeSection({
   onStartMission
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: RepositoryKnowledgePackage;
+  intelligence: WorkspaceKnowledgePackage;
   isGenerating: boolean;
   onRegenerate: () => void;
   onStartMission: () => void;
@@ -371,7 +371,7 @@ export function WelcomeSection({
           <dl className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <IntroFact label="Owner" value={repository.ownerLogin} />
             <IntroFact label="Primary language" value={repository.primaryLanguage ?? "Unknown"} />
-            <IntroFact label="Last analyzed" value={formatDate(intelligence.generatedAt)} />
+            <IntroFact label="Workspace prepared" value={formatDate(intelligence.generatedAt)} />
             <IntroFact label="Confidence Level" value={confidenceLevel(intelligence)} />
           </dl>
 
@@ -395,7 +395,7 @@ export function WelcomeSection({
           <div className="mt-5 grid gap-2">
             <Button type="button" onClick={onRegenerate} disabled={isGenerating}>
               {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
-              {isGenerating ? "Refreshing..." : "Refresh Analysis"}
+              {isGenerating ? "Refreshing..." : "Refresh Workspace"}
             </Button>
             <a href={repository.htmlUrl} target="_blank" rel="noreferrer" className="openforge-button">
               <Github className="h-4 w-4" aria-hidden="true" />
@@ -418,7 +418,7 @@ function IntroFact({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function CanContributeSection({ intelligence }: { intelligence: RepositoryKnowledgePackage }) {
+export function CanContributeSection({ intelligence }: { intelligence: WorkspaceKnowledgePackage }) {
   const model = readinessModel(intelligence);
   const Icon = toneIcon(model.tone);
 
@@ -455,7 +455,7 @@ function SignalRow({ icon, text }: { icon: ReactNode; text: string }) {
   );
 }
 
-export function OpenForgeInsightSection({ intelligence }: { intelligence: RepositoryKnowledgePackage }) {
+export function OpenForgeInsightSection({ intelligence }: { intelligence: WorkspaceKnowledgePackage }) {
   return (
     <WorkspaceCard className="border-brand-violet/20 bg-soft-blue-wash/55">
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
@@ -471,7 +471,7 @@ export function OpenForgeInsightSection({ intelligence }: { intelligence: Reposi
   );
 }
 
-export function ProjectBuiltSection({ intelligence }: { intelligence: RepositoryKnowledgePackage }) {
+export function ProjectBuiltSection({ intelligence }: { intelligence: WorkspaceKnowledgePackage }) {
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="How This Project Is Built" title="The technology shape, without the long tour." />
@@ -499,7 +499,7 @@ export function WhyRecommendedSection({
   intelligence
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: RepositoryKnowledgePackage;
+  intelligence: WorkspaceKnowledgePackage;
 }) {
   return (
     <WorkspaceCard>
@@ -522,7 +522,7 @@ export function WhyRecommendedSection({
   );
 }
 
-export function FirstFifteenMinutesSection({ intelligence }: { intelligence: RepositoryKnowledgePackage }) {
+export function FirstFifteenMinutesSection({ intelligence }: { intelligence: WorkspaceKnowledgePackage }) {
   const steps = firstFifteenMinutes(intelligence);
 
   return (
@@ -552,7 +552,7 @@ export function FirstFifteenMinutesSection({ intelligence }: { intelligence: Rep
   );
 }
 
-export function MentorshipSection({ intelligence }: { intelligence: RepositoryKnowledgePackage }) {
+export function MentorshipSection({ intelligence }: { intelligence: WorkspaceKnowledgePackage }) {
   const advice = mentorship(intelligence);
 
   return (
@@ -680,7 +680,7 @@ export function WorkspaceOverview({
   onStartMission
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: RepositoryKnowledgePackage | null;
+  intelligence: WorkspaceKnowledgePackage | null;
   isGenerating: boolean;
   onRegenerate: () => void;
   onStartMission: () => void;
@@ -688,8 +688,8 @@ export function WorkspaceOverview({
   if (!intelligence) {
     return (
       <EmptyState
-        title="Repository intelligence not generated"
-        description={`${repository.fullName} is ready to open, but the Home needs Repository Intelligence before it can explain readiness, structure, and first steps.`}
+        title="Workspace knowledge not generated"
+        description={`${repository.fullName} is ready to open, but the Home needs Workspace Knowledge before it can explain readiness, structure, and first steps.`}
         action={
           <Button type="button" onClick={onRegenerate} disabled={isGenerating} variant="primary">
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <PackageCheck className="h-4 w-4" aria-hidden="true" />}
@@ -719,3 +719,4 @@ export function WorkspaceOverview({
     </div>
   );
 }
+

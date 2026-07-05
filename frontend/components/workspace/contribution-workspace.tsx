@@ -30,7 +30,7 @@ export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo
 }
 
 function ContributionWorkspace() {
-  const { repository, intelligence, isLoading, isGenerating, error, retry, regenerateIntelligence, setMentorContext } = useWorkspace();
+  const { repository, intelligence, isLoading, isGenerating, error, retry, regenerateWorkspaceKnowledge, setMentorContext } = useWorkspace();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
 
   if (isLoading) return <WorkspaceLoader />;
@@ -47,7 +47,7 @@ function ContributionWorkspace() {
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}
-          onRegenerate={() => void regenerateIntelligence()}
+          onRegenerate={() => void regenerateWorkspaceKnowledge()}
           onStartMission={() => setActiveTab("mission")}
         />
       ) : activeTab === "map" ? (
@@ -55,7 +55,7 @@ function ContributionWorkspace() {
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}
-          onRegenerate={() => void regenerateIntelligence()}
+          onRegenerate={() => void regenerateWorkspaceKnowledge()}
           onAskMentor={(concept) => {
             setMentorContext({
               source: "explorer",
@@ -71,7 +71,7 @@ function ContributionWorkspace() {
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}
-          onRegenerate={() => void regenerateIntelligence()}
+          onRegenerate={() => void regenerateWorkspaceKnowledge()}
           onAskMentor={(prompt) => {
             setMentorContext({ source: "mission", category: "mission", prompt });
             setActiveTab("mentor");
@@ -82,7 +82,7 @@ function ContributionWorkspace() {
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}
-          onRegenerate={() => void regenerateIntelligence()}
+          onRegenerate={() => void regenerateWorkspaceKnowledge()}
           onOpenExplorer={() => setActiveTab("map")}
         />
       ) : activeTab === "review" ? (
@@ -90,7 +90,7 @@ function ContributionWorkspace() {
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}
-          onRegenerate={() => void regenerateIntelligence()}
+          onRegenerate={() => void regenerateWorkspaceKnowledge()}
           onAskMentor={(prompt) => {
             setMentorContext({ source: "review", category: "contribution", prompt });
             setActiveTab("mentor");
@@ -145,3 +145,4 @@ export {
   WorkspaceTabBar,
   WorkspaceTabs
 } from "./workspace-components";
+

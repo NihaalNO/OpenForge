@@ -4,16 +4,15 @@ import type {
   AiIssueExplanation,
   AiLearningRoadmap,
   AiLogSummary,
-  AiLogsResponse,
-  AiRepositoryAnalysis
+  AiLogsResponse
 } from "@openforge/shared";
 import { ConflictError, NotFoundError } from "../lib/http-error.js";
 import { getSupabaseServiceClient } from "../lib/supabase.js";
 import { env } from "../config/env.js";
 import { aiProviderService } from "./ai-provider.service.js";
-import { repositoryIntelligenceService } from "./repository-intelligence.service.js";
+import { workspaceKnowledgeService } from "./workspace-knowledge.service.js";
 
-type AnalysisType = "repository_summary" | "issue_explanation" | "roadmap" | "contribution_plan";
+type AnalysisType = "issue_explanation" | "roadmap" | "contribution_plan";
 
 interface AiLogRow {
   id: string;
@@ -87,54 +86,6 @@ function toLogSummary(row: AiLogRow): AiLogSummary {
 
 export class AiService {
   private readonly supabase = getSupabaseServiceClient();
-
-  async analyzeRepository(
-    userId: string,
-    repositoryId: string,
-    regenerate = false
-  ): Promise<AiAnalysisResponse<AiRepositoryAnalysis>> {
-    await this.assertGitHubSynced(userId);
-    const repository = await this.getRepository(repositoryId);
-    const cached = regenerate
-      ? null
-      : await this.getCachedLog<AiRepositoryAnalysis>(userId, "repository_summary", repositoryId);
-
-    if (cached) {
-      return cached;
-    }
-
-    const knowledgePackage = await repositoryIntelligenceService.getLatestKnowledgePackage(userId, repositoryId);
-
-    return this.generateAndLog<AiRepositoryAnalysis>({
-      userId,
-      repositoryId,
-      analysisType: "repository_summary",
-      prompt: `Analyze this GitHub repository for a new contributor.
-
-Repository:
-${JSON.stringify(
-  {
-    fullName: repository.full_name,
-    description: repository.description,
-    primaryLanguage: repository.primary_language,
-    languages: repository.languages,
-    topics: repository.topics,
-    stars: repository.stars_count,
-    forks: repository.forks_count,
-    openIssues: repository.open_issues_count,
-    defaultBranch: repository.default_branch,
-    rawData: repository.raw_data
-  },
-  null,
-  2
-)}
-
-Repository Knowledge Package, if available:
-${compactKnowledgePackage(knowledgePackage)}`,
-      schemaHint:
-        '{"summary":"plain language summary","techStack":["string"],"architecture":"folder or architecture explanation","importantFiles":["string"],"contributionEntryPoints":["string"]}'
-    });
-  }
 
   async explainIssue(
     userId: string,
@@ -277,7 +228,7 @@ ${JSON.stringify(contributionStats, null, 2)}`,
       return cached;
     }
 
-    const knowledgePackage = await repositoryIntelligenceService.getLatestKnowledgePackage(userId, repository.id);
+    const knowledgePackage = await workspaceKnowledgeService.getLatestKnowledgePackage(userId, repository.id);
 
     return this.generateAndLog<AiContributionPlan>({
       userId,
@@ -548,3 +499,4 @@ ${JSON.stringify(issue, null, 2)}`,
 }
 
 export const aiService = new AiService();
+

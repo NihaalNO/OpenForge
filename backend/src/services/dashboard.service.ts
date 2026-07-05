@@ -1,6 +1,5 @@
 import type {
   AiIssueExplanation,
-  AiRepositoryAnalysis,
   DashboardActivityItem,
   DashboardAnalyticsResponse,
   DashboardResponse,
@@ -138,10 +137,9 @@ export class DashboardService {
 
   async getDashboard(userId: string): Promise<DashboardResponse> {
     const user = await getCurrentUser(userId);
-    const [github, counts, aiLogs, recentActivity] = await Promise.all([
+    const [github, counts, recentActivity] = await Promise.all([
       this.getGitHubProfile(userId),
       this.getCounts(userId),
-      this.getRecentAiLogs(userId),
       this.getRecentActivity(userId)
     ]);
 
@@ -151,7 +149,6 @@ export class DashboardService {
       metrics: {
         ...counts
       },
-      recentAiAnalyses: aiLogs,
       recentActivity
     };
   }
@@ -237,10 +234,7 @@ export class DashboardService {
       rows.map(async (row) => ({
           id: row.id,
           savedAt: row.created_at,
-          repository: {
-            ...toRepositorySummary(row.repository!),
-            cachedAiSummary: await this.getCachedRepositorySummary(row.repository!.id)
-          }
+          repository: toRepositorySummary(row.repository!)
         }))
     );
 
@@ -362,16 +356,6 @@ export class DashboardService {
       throw error;
     }
 
-    const { count: aiAnalysesCompleted, error: aiError } = await this.supabase
-      .from("ai_analysis_logs")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("status", "completed");
-
-    if (aiError) {
-      throw aiError;
-    }
-
     const { count: contributionPlansGenerated, error: planError } = await this.supabase
       .from("ai_analysis_logs")
       .select("id", { count: "exact", head: true })
@@ -404,33 +388,10 @@ export class DashboardService {
         repository.relationship_type === "contributor" ||
         repository.relationship_type === "organization_member"
       ).length,
-      aiAnalysesCompleted: aiAnalysesCompleted ?? 0,
       contributionPlansGenerated: contributionPlansGenerated ?? 0,
       learningRoadmapStatus: toRoadmapStatus(roadmap?.status),
       unreadNotifications: unreadNotifications ?? 0
     };
-  }
-
-  private async getRecentAiLogs(userId: string) {
-    const { data, error } = await this.supabase
-      .from("ai_analysis_logs")
-      .select("id,analysis_type,provider,model,status,created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    if (error) {
-      throw error;
-    }
-
-    return (data ?? []).map((row) => ({
-      id: row.id,
-      analysisType: row.analysis_type,
-      provider: row.provider,
-      model: row.model,
-      status: row.status,
-      createdAt: row.created_at
-    }));
   }
 
   private async getRecentActivity(userId: string): Promise<DashboardActivityItem[]> {
@@ -455,24 +416,6 @@ export class DashboardService {
     }));
   }
 
-  private async getCachedRepositorySummary(repositoryId: string) {
-    const { data, error } = await this.supabase
-      .from("ai_analysis_logs")
-      .select("response_payload")
-      .eq("repository_id", repositoryId)
-      .eq("analysis_type", "repository_summary")
-      .eq("status", "completed")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    return (data?.response_payload as AiRepositoryAnalysis | undefined) ?? null;
-  }
-
   private async getCachedIssueExplanation(issueId: string) {
     const { data, error } = await this.supabase
       .from("ai_analysis_logs")
@@ -493,3 +436,4 @@ export class DashboardService {
 }
 
 export const dashboardService = new DashboardService();
+

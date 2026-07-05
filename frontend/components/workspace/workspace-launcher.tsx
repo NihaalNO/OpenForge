@@ -7,8 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingSkeleton, PageHeader } from "@/components/common/ui";
 import {
   fetchGitHubRepositories,
-  fetchRepositoryIntelligence,
-  generateRepositoryIntelligence
+  fetchWorkspaceKnowledge,
+  generateWorkspaceKnowledge
 } from "@/lib/api/github";
 import { relationshipLabel } from "./workspace-components";
 
@@ -27,7 +27,7 @@ export function WorkspaceLauncher() {
 
       const checks = await Promise.allSettled(
         response.repositories.map(async (repository) => {
-          await fetchRepositoryIntelligence(repository.id);
+          await fetchWorkspaceKnowledge(repository.id);
           return repository.id;
         })
       );
@@ -51,10 +51,10 @@ export function WorkspaceLauncher() {
     setError(null);
 
     try {
-      await generateRepositoryIntelligence(repositoryId);
+      await generateWorkspaceKnowledge(repositoryId);
       setIntelligenceMap((current) => ({ ...current, [repositoryId]: true }));
     } catch (generateError) {
-      setError(generateError instanceof Error ? generateError.message : "Repository intelligence generation failed");
+      setError(generateError instanceof Error ? generateError.message : "Workspace knowledge generation failed");
     } finally {
       setGeneratingRepositoryId(null);
     }
@@ -126,7 +126,7 @@ export function WorkspaceLauncher() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap gap-2">
                       <Badge>{relationshipLabel(repository)}</Badge>
-                      <Badge>{hasIntelligence ? "Intelligence ready" : "Intelligence pending"}</Badge>
+                      <Badge>{hasIntelligence ? "Workspace ready" : "Workspace pending"}</Badge>
                       <Badge>{repository.primaryLanguage ?? "Unknown language"}</Badge>
                     </div>
                     <h2 className="mt-4 break-words text-xl font-semibold">{repository.fullName}</h2>
@@ -152,7 +152,7 @@ export function WorkspaceLauncher() {
                         variant="primary"
                       >
                         <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-                        {generatingRepositoryId === repository.id ? "Generating..." : "Generate Intelligence"}
+                        {generatingRepositoryId === repository.id ? "Generating..." : "Prepare Workspace"}
                       </Button>
                     )}
                   </div>
@@ -165,3 +165,4 @@ export function WorkspaceLauncher() {
     </div>
   );
 }
+

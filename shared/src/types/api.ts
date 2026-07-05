@@ -124,7 +124,7 @@ export interface GitHubIssueSyncResponse {
 
 export type RepositoryImportance = "high" | "medium" | "low";
 
-export interface RepositoryKnowledgePackage {
+export interface WorkspaceKnowledgePackage {
   repositoryId: string;
   fullName: string;
   provider: "github";
@@ -215,10 +215,10 @@ export interface RepositoryKnowledgePackage {
   };
 }
 
-export interface RepositoryIntelligenceResponse {
-  knowledgePackage: RepositoryKnowledgePackage;
+export interface WorkspaceKnowledgeResponse {
+  knowledgePackage: WorkspaceKnowledgePackage;
   cached: boolean;
-  intelligenceId: string;
+  workspaceKnowledgeId: string;
 }
 
 export interface SkillProfileSummary {
@@ -298,14 +298,6 @@ export interface SavedIssueResponse {
   issueId: string;
 }
 
-export interface AiRepositoryAnalysis {
-  summary: string;
-  techStack: string[];
-  architecture: string;
-  importantFiles: string[];
-  contributionEntryPoints: string[];
-}
-
 export interface AiIssueExplanation {
   summary: string;
   requiredKnowledge: string[];
@@ -370,12 +362,10 @@ export interface DashboardResponse {
     ownedRepositories: number;
     forkedRepositories: number;
     contributedRepositories: number;
-    aiAnalysesCompleted: number;
     contributionPlansGenerated: number;
     learningRoadmapStatus: "not_generated" | "active" | "completed" | "archived";
     unreadNotifications: number;
   };
-  recentAiAnalyses: AiLogSummary[];
   recentActivity: DashboardActivityItem[];
 }
 
@@ -397,9 +387,7 @@ export interface DashboardAnalyticsResponse {
 export interface SavedRepositoryItem {
   id: string;
   savedAt: string;
-  repository: GitHubRepositorySummary & {
-    cachedAiSummary: AiRepositoryAnalysis | null;
-  };
+  repository: GitHubRepositorySummary;
 }
 
 export interface SavedRepositoriesResponse {
@@ -464,3 +452,4 @@ export interface AppSettings {
 export interface SettingsResponse {
   settings: AppSettings;
 }
+

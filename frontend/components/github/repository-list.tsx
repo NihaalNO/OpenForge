@@ -7,8 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingSkeleton, PageHeader } from "@/components/common/ui";
 import {
   fetchGitHubRepositories,
-  fetchRepositoryIntelligence,
-  generateRepositoryIntelligence,
+  fetchWorkspaceKnowledge,
+  generateWorkspaceKnowledge,
   syncGitHubData
 } from "@/lib/api/github";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function RepositoryList() {
 
     const checks = await Promise.allSettled(
       response.repositories.map(async (repository) => {
-        await fetchRepositoryIntelligence(repository.id);
+        await fetchWorkspaceKnowledge(repository.id);
         return repository.id;
       })
     );
@@ -90,10 +90,10 @@ export function RepositoryList() {
     setError(null);
 
     try {
-      await generateRepositoryIntelligence(repositoryId);
+      await generateWorkspaceKnowledge(repositoryId);
       setIntelligenceMap((current) => ({ ...current, [repositoryId]: true }));
     } catch (generateError) {
-      setError(generateError instanceof Error ? generateError.message : "Repository intelligence generation failed");
+      setError(generateError instanceof Error ? generateError.message : "Workspace knowledge generation failed");
     } finally {
       setGeneratingRepositoryId(null);
     }
@@ -128,7 +128,7 @@ export function RepositoryList() {
       <PageHeader
         eyebrow="GitHub Data"
         title="Repositories"
-        description="Synced GitHub repositories with clear metadata, relationship tags, and focused AI actions."
+        description="Synced GitHub repositories with clear metadata, relationship tags, and focused workspace actions."
         actions={
           <Button type="button" onClick={handleSync} disabled={isSyncing} variant="primary">
             <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -219,7 +219,7 @@ export function RepositoryList() {
                     variant="primary"
                   >
                     <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-                    {generatingRepositoryId === repository.id ? "Generating..." : "Generate Intelligence"}
+                    {generatingRepositoryId === repository.id ? "Generating..." : "Prepare Workspace"}
                   </Button>
                 )}
               </div>
@@ -230,3 +230,4 @@ export function RepositoryList() {
     </div>
   );
 }
+

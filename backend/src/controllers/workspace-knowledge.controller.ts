@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { NotFoundError, UnauthorizedError } from "../lib/http-error.js";
-import { repositoryIntelligenceService } from "../services/repository-intelligence.service.js";
+import { workspaceKnowledgeService } from "../services/workspace-knowledge.service.js";
 
 function requireUserId(req: Request) {
   if (!req.auth) {
@@ -24,9 +24,9 @@ function shouldRegenerate(req: Request) {
   return Boolean((req.body as { regenerate?: boolean } | undefined)?.regenerate);
 }
 
-export async function generateRepositoryIntelligence(req: Request, res: Response) {
+export async function generateWorkspaceKnowledge(req: Request, res: Response) {
   res.json(
-    await repositoryIntelligenceService.generateIntelligence(
+    await workspaceKnowledgeService.generateWorkspaceKnowledge(
       requireUserId(req),
       requireParam(req, "repositoryId"),
       shouldRegenerate(req)
@@ -34,11 +34,13 @@ export async function generateRepositoryIntelligence(req: Request, res: Response
   );
 }
 
-export async function getRepositoryIntelligence(req: Request, res: Response) {
+export async function getWorkspaceKnowledge(req: Request, res: Response) {
   res.json(
-    await repositoryIntelligenceService.getIntelligence(
+    await workspaceKnowledgeService.getWorkspaceKnowledge(
       requireUserId(req),
       requireParam(req, "repositoryId")
     )
   );
 }
+
+

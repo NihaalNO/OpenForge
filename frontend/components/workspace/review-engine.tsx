@@ -1,6 +1,6 @@
 "use client";
 
-import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, WorkspaceKnowledgePackage } from "@openforge/shared";
 import {
   AlertTriangle,
   BookOpenCheck,
@@ -126,11 +126,11 @@ export function timelineStorageKey(repositoryId: string) {
   return `openforge:timeline:${repositoryId}`;
 }
 
-function readmePath(intelligence: RepositoryKnowledgePackage) {
+function readmePath(intelligence: WorkspaceKnowledgePackage) {
   return intelligence.readme.path ?? "README";
 }
 
-function allKnownPaths(intelligence: RepositoryKnowledgePackage) {
+function allKnownPaths(intelligence: WorkspaceKnowledgePackage) {
   return unique([
     ...intelligence.raw.selectedFilePaths,
     ...intelligence.docs.docFiles,
@@ -148,7 +148,7 @@ function pathsMatching(paths: string[], pattern: RegExp, limit = 5) {
   return paths.filter((path) => pattern.test(path)).slice(0, limit);
 }
 
-function primaryTests(intelligence: RepositoryKnowledgePackage) {
+function primaryTests(intelligence: WorkspaceKnowledgePackage) {
   return unique([...intelligence.testStructure.testDirectories, ...intelligence.testStructure.testFiles]).slice(0, 5);
 }
 
@@ -173,7 +173,7 @@ function confidenceLevel(readySignals: number, totalSignals: number): Confidence
 
 function buildReviewModel(
   repository: GitHubRepositorySummary,
-  intelligence: RepositoryKnowledgePackage,
+  intelligence: WorkspaceKnowledgePackage,
   mission: StoredMission
 ): ReviewModel {
   const paths = allKnownPaths(intelligence);
@@ -194,7 +194,7 @@ function buildReviewModel(
   const workflowNames = intelligence.workflowFiles.map((workflow) => workflow.name || workflow.path);
 
   const gaps = [
-    intelligence.sourceLimits.truncated ? "Repository Intelligence was truncated, so confirm the changed area manually before opening a PR." : null,
+    intelligence.sourceLimits.truncated ? "Workspace Knowledge was truncated, so confirm the changed area manually before opening a PR." : null,
     !intelligence.readme.content ? "README content was not available in the scan." : null,
     !intelligence.docs.hasContributingGuide ? "No contribution guide was detected. Use README, tests, and CI as the practical maintainer contract." : null,
     !intelligence.testStructure.hasTests ? "No automated tests were detected. Manual verification notes will matter more." : null,
@@ -415,7 +415,7 @@ function buildReviewModel(
         level: confidenceLevel(architectureFiles.length ? 3 : 1, 4),
         explanation: architectureFiles.length
           ? `${architectureFiles[0]} gives you a concrete anchor for explaining the system shape.`
-          : "The architecture anchor is not obvious from Repository Intelligence, so confirm it manually."
+          : "The architecture anchor is not obvious from Workspace Knowledge, so confirm it manually."
       },
       {
         label: "Contribution Confidence",
@@ -466,7 +466,7 @@ export function ReviewEngine({
   onAskMentor
 }: {
   repository: GitHubRepositorySummary;
-  intelligence: RepositoryKnowledgePackage | null;
+  intelligence: WorkspaceKnowledgePackage | null;
   isGenerating: boolean;
   onRegenerate: () => void;
   onAskMentor?: (prompt: string) => void;
@@ -503,12 +503,12 @@ export function ReviewEngine({
   if (!intelligence || !model) {
     return (
       <EmptyState
-        title="Review needs Repository Intelligence"
+        title="Review needs Workspace Knowledge"
         description={`${repository.fullName} needs repository understanding before Review can prepare pull request readiness.`}
         action={
           <Button type="button" onClick={onRegenerate} disabled={isGenerating} variant="primary">
             <PackageCheck className={cn("h-4 w-4", isGenerating && "animate-spin")} aria-hidden="true" />
-            {isGenerating ? "Understanding repository..." : "Generate Intelligence"}
+            {isGenerating ? "Understanding repository..." : "Prepare Workspace"}
           </Button>
         }
       />
@@ -699,7 +699,7 @@ function RepositoryUnderstanding({ model, onAskMentor }: { model: ReviewModel; o
           <div className="mt-3 grid gap-2">
             {model.understanding.gaps.length ? model.understanding.gaps.map((gap) => (
               <p key={gap} className="text-sm leading-6 text-muted-foreground">{gap}</p>
-            )) : <p className="text-sm leading-6 text-muted-foreground">No major understanding gaps were detected from Repository Intelligence and Mission progress.</p>}
+            )) : <p className="text-sm leading-6 text-muted-foreground">No major understanding gaps were detected from Workspace Knowledge and Mission progress.</p>}
           </div>
         </section>
       </div>
@@ -929,3 +929,4 @@ function ReflectionPanel({
     </WorkspaceCard>
   );
 }
+

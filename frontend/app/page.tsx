@@ -35,16 +35,16 @@ const problems = [
 const solutions: Array<[string, string, LucideIcon]> = [
   ["Sync GitHub data", "Bring repositories, languages, topics, and contribution context into one calm workspace.", Github],
   ["Understand repositories", "Summarize structure, signals, and entry points before you spend hours exploring.", Code2],
-  ["Open the workspace", "Map repository intelligence into a mission timeline, mentor prompts, and quality gates.", Sparkles],
+  ["Open the workspace", "Map workspace knowledge into a mission timeline, mentor prompts, and quality gates.", Sparkles],
   ["Build a learning roadmap", "Turn skill gaps into weekly practice steps tied to real open-source work.", BookOpen]
 ];
 
 const features: Array<[string, string, LucideIcon]> = [
   ["GitHub Data Workspace", "A focused view of owned, forked, contributed, and organization repositories.", Github],
-  ["Repository Intelligence", "Deterministic context from docs, tests, CI, manifests, and important paths.", Code2],
+  ["Workspace Knowledge", "Deterministic context from docs, tests, CI, manifests, and important paths.", Code2],
   ["Contribution Workspace", "Repository-specific missions that turn uncertainty into next actions.", Route],
   ["Learning Roadmap", "Week-by-week skill building shaped by your GitHub profile and target projects.", BookOpen],
-  ["Smart Notifications", "Useful updates for syncs, analyses, and generated plans without dashboard noise.", Bell],
+  ["Smart Notifications", "Useful updates for syncs, updates, and generated plans without dashboard noise.", Bell],
   ["User Settings & AI Preferences", "Control display, GitHub sync status, provider choices, and output detail.", Settings]
 ];
 
@@ -191,7 +191,7 @@ export default function HomePage() {
                   <p className="font-medium">{repo}</p>
                   <RefreshCw className="h-4 w-4 text-brand-violet" aria-hidden="true" />
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">Open a workspace or generate repository intelligence.</p>
+                <p className="mt-2 text-sm text-muted-foreground">Open a workspace or generate workspace knowledge.</p>
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ export default function HomePage() {
             <Card key={item} className="p-5">
               <CheckCircle2 className="h-5 w-5 text-brand-violet" aria-hidden="true" />
               <h3 className="mt-4 font-semibold">{item}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Clear, scoped guidance grounded in repository intelligence.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Clear, scoped guidance grounded in workspace knowledge.</p>
             </Card>
           ))}
         </div>
@@ -281,3 +281,4 @@ function Section({
     </section>
   );
 }
+

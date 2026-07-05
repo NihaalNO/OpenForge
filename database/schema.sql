@@ -250,7 +250,7 @@ create table if not exists public.ai_analysis_logs (
   user_id uuid references public.users(id) on delete set null,
   repository_id uuid references public.github_repositories(id) on delete set null,
   issue_id uuid references public.github_issues(id) on delete set null,
-  analysis_type text not null check (analysis_type in ('repository_summary', 'issue_explanation', 'roadmap', 'contribution_plan', 'skill_gap')),
+  analysis_type text not null check (analysis_type in ('issue_explanation', 'roadmap', 'contribution_plan', 'skill_gap')),
   provider text not null,
   model text not null,
   prompt_version text not null,
@@ -373,3 +373,4 @@ create policy "Users can manage own saved repositories" on public.saved_reposito
 create policy "Users can manage own saved issues" on public.saved_issues for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "Users can manage own notifications" on public.notifications for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "Users can read own ai logs" on public.ai_analysis_logs for select using (auth.uid() = user_id);
+

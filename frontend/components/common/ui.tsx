@@ -241,7 +241,7 @@ export function ProductMockup() {
               </Card>
               <Card className="p-4">
                 <p className="text-sm font-semibold">Latest notification</p>
-                <p className="mt-3 text-sm text-muted-foreground">Your repository analysis finished and the plan is ready.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Your workspace preparation finished and the plan is ready.</p>
               </Card>
             </div>
           </section>
@@ -376,3 +376,4 @@ function FloatingBubble({ icon, className, small = false }: { icon: ReactNode; c
 export function ArrowIcon() {
   return <ArrowRight className="h-4 w-4" aria-hidden="true" />;
 }
+

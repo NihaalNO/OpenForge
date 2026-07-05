@@ -4,20 +4,9 @@ import type {
   AiAnalysisResponse,
   AiContributionPlan,
   AiLearningRoadmap,
-  AiLogsResponse,
-  AiRepositoryAnalysis
+  AiLogsResponse
 } from "@openforge/shared";
 import { apiRequest } from "./client";
-
-export function analyzeRepository(repositoryId: string, regenerate = false) {
-  return apiRequest<AiAnalysisResponse<AiRepositoryAnalysis>>(
-    `/ai/repository/${repositoryId}/analyze`,
-    {
-      method: "POST",
-      body: JSON.stringify({ regenerate })
-    }
-  );
-}
 
 export function generateLearningRoadmap(regenerate = false) {
   return apiRequest<AiAnalysisResponse<AiLearningRoadmap>>("/ai/learning-roadmap/generate", {
@@ -40,3 +29,4 @@ export function generateContributionPlan(input: {
 export function fetchAiLogs() {
   return apiRequest<AiLogsResponse>("/ai/logs");
 }
+

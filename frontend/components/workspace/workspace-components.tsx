@@ -121,8 +121,8 @@ export function WorkspaceError({ message }: { message: string }) {
 }
 
 export function WorkspaceEmptyState({
-  title = "Repository intelligence not generated",
-  description = "Generate Repository Intelligence to prepare this workspace."
+  title = "Workspace knowledge not generated",
+  description = "Generate Workspace Knowledge to prepare this workspace."
 }: {
   title?: string;
   description?: string;
@@ -249,3 +249,4 @@ export function WorkspacePlaceholder({ tab }: { tab: Exclude<WorkspaceTab, "over
     </WorkspaceCard>
   );
 }
+

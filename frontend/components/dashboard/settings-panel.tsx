@@ -83,7 +83,7 @@ export function SettingsPanel() {
           </div>
         </SettingsSection>
 
-        <SettingsSection title="AI provider preferences" description="Defaults for future repository analysis and contribution plans.">
+        <SettingsSection title="AI provider preferences" description="Defaults for future workspace preparation and contribution plans.">
           <select
             value={settings.ai.defaultProvider}
             onChange={(event) =>
@@ -160,3 +160,4 @@ function SettingsSection({
     </Card>
   );
 }
+

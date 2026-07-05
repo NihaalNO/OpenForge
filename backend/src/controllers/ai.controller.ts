@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { NotFoundError, UnauthorizedError } from "../lib/http-error.js";
+import { UnauthorizedError } from "../lib/http-error.js";
 import { aiService } from "../services/ai.service.js";
 
 function requireUserId(req: Request) {
@@ -10,28 +10,8 @@ function requireUserId(req: Request) {
   return req.auth.userId;
 }
 
-function requireParam(req: Request, name: string) {
-  const value = req.params[name];
-
-  if (!value) {
-    throw new NotFoundError(`${name} route parameter is required`);
-  }
-
-  return value;
-}
-
 function shouldRegenerate(req: Request) {
   return Boolean((req.body as { regenerate?: boolean } | undefined)?.regenerate);
-}
-
-export async function analyzeRepository(req: Request, res: Response) {
-  res.json(
-    await aiService.analyzeRepository(
-      requireUserId(req),
-      requireParam(req, "repositoryId"),
-      shouldRegenerate(req)
-    )
-  );
 }
 
 export async function generateLearningRoadmap(req: Request, res: Response) {
@@ -58,3 +38,4 @@ export async function generateContributionPlan(req: Request, res: Response) {
 export async function listAiLogs(req: Request, res: Response) {
   res.json(await aiService.listLogs(requireUserId(req)));
 }
+

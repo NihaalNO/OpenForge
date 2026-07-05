@@ -33,7 +33,7 @@ export function LearningRoadmapPanel() {
       <PageHeader
         eyebrow="Learning Roadmap"
         title="Skill growth tied to real repositories"
-        description="Generate a weekly learning plan from synced GitHub context and AI repository insights."
+        description="Generate a weekly learning plan from synced GitHub context and workspace guidance."
         actions={
           <>
             <Button type="button" onClick={() => void runRoadmap(false)} disabled={isLoading} variant="primary">
@@ -93,9 +93,10 @@ export function LearningRoadmapPanel() {
       ) : (
         <EmptyState
           title="Generate a learning roadmap"
-          description="After syncing GitHub data and creating AI repository insights, generate a week-by-week path for the skills you need next."
+          description="After syncing GitHub data and creating workspace guidance, generate a week-by-week path for the skills you need next."
         />
       )}
     </div>
   );
 }
+

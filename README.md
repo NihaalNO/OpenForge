@@ -8,6 +8,8 @@
 
 **OpenForge** is an AI-powered workspace for understanding repositories and contributing to open source.
 
+OpenForge now centers repository understanding inside the Workspace. Workspace Home, Explorer, Mission, Mentor, Review, and Timeline own the contributor journey without a separate tool surface.
+
 The project studies a practical research question:
 
 > How can GitHub profile intelligence, repository metadata, and AI-guided planning reduce the discovery and onboarding friction faced by new and intermediate open-source contributors?
@@ -51,11 +53,11 @@ flowchart LR
 
 | Layer | Technology | Responsibility |
 | --- | --- | --- |
-| 🖥️ Frontend | Next.js 15, React 19, Tailwind CSS | Application shell, protected pages, dashboards, repository views, AI result panels. |
+| 🖥️ Frontend | Next.js 15, React 19, Tailwind CSS | Application shell, protected pages, dashboards, repository views, and Workspace flows. |
 | ⚙️ Backend | Express, TypeScript, Zod | REST API, request middleware, controllers, services, validation, health endpoints. |
 | 📦 Shared | TypeScript workspace package | Shared API types, constants, and contracts used by frontend and backend. |
 | 🗄️ Data | SQL schema, Supabase-ready utilities | User, repository, recommendation, and contribution-oriented persistence model. |
-| 🤖 AI Services | Backend service abstraction | Repository analysis, contribution planning, roadmap generation, and AI response shaping. |
+| 🤖 AI Services | Backend service abstraction | Contribution planning, roadmap generation, issue explanation, and AI response shaping. |
 | 🐙 GitHub | GitHub client/service layer | Repository metadata, issue-oriented workflows, and developer profile integration. |
 
 ## ✨ Feature Matrix
@@ -66,7 +68,7 @@ flowchart LR
 | ✅ Health API | Implemented | `GET /health` and versioned health routes. |
 | ✅ Dashboard shell | Implemented | Auth-aware application area with dashboard-oriented components. |
 | ✅ GitHub service layer | Implemented | Backend client/service structure and frontend API adapters. |
-| ✅ AI planning UI | Implemented | Panels for repository AI, learning roadmap, and contribution planning. |
+| ✅ Workspace planning UI | Implemented | Workspace-owned repository guidance, learning roadmap, and contribution planning. |
 | ✅ Shared contracts | Implemented | Reusable TypeScript package for cross-layer consistency. |
 | 🚧 Automated tests | Planned | Workspace test scripts currently act as placeholders. |
 | 🚧 Production deployment | Planned | Docker and deployment script placeholders are present. |

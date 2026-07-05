@@ -1,7 +1,7 @@
 "use client";
 
 import type { DashboardResponse } from "@openforge/shared";
-import { Activity, BookOpen, Bot, GitFork, Github, RefreshCw, Star } from "lucide-react";
+import { Activity, BookOpen, GitFork, Github, RefreshCw, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button, Card, ErrorState, LoadingSkeleton, PageHeader, StatCard } from "@/components/common/ui";
 import { fetchDashboard } from "@/lib/api/dashboard";
@@ -62,7 +62,7 @@ export function OverviewDashboard() {
       <PageHeader
         eyebrow="User Overview"
         title="Your open-source control room"
-        description="GitHub sync, repository coverage, AI analysis activity, plans, roadmap status, and recent updates in one calm workspace."
+        description="GitHub sync, repository coverage, workspace plans, roadmap status, and recent updates in one calm workspace."
         actions={
           <Button type="button" onClick={handleSync} disabled={isSyncing} variant="primary">
             <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -100,35 +100,15 @@ export function OverviewDashboard() {
         </div>
       </Card>
 
-      <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
         <StatCard label="Total repositories synced" value={dashboard.metrics.totalRepositories} icon={Github} />
         <StatCard label="Owned repositories" value={dashboard.metrics.ownedRepositories} icon={Star} />
         <StatCard label="Forked repositories" value={dashboard.metrics.forkedRepositories} icon={GitFork} />
         <StatCard label="Contributed repositories" value={dashboard.metrics.contributedRepositories} icon={Activity} />
-        <StatCard label="AI analyses completed" value={dashboard.metrics.aiAnalysesCompleted} icon={Bot} />
         <StatCard label="Plans generated" value={dashboard.metrics.contributionPlansGenerated} icon={BookOpen} />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card>
-          <h2 className="text-lg font-semibold">Recent AI analyses</h2>
-          {dashboard.recentAiAnalyses.length === 0 ? (
-            <EmptyInline text="No AI analyses yet. Start from GitHub Data or Workspace when you are ready." />
-          ) : (
-            <ul className="mt-4 divide-y divide-border">
-              {dashboard.recentAiAnalyses.map((log) => (
-                <li key={log.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <div>
-                    <p className="font-medium">{log.analysisType.replaceAll("_", " ")}</p>
-                    <p className="text-muted-foreground">{log.provider} / {log.model}</p>
-                  </div>
-                  <span className="openforge-badge">{log.status}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
+      <section>
         <Card>
           <h2 className="text-lg font-semibold">Recent activity</h2>
           {dashboard.recentActivity.length === 0 ? (
@@ -152,3 +132,4 @@ export function OverviewDashboard() {
 function EmptyInline({ text }: { text: string }) {
   return <p className="mt-4 rounded-[15px] border border-border bg-background p-4 text-sm text-muted-foreground">{text}</p>;
 }
+
