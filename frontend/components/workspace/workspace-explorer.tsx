@@ -418,12 +418,14 @@ export function WorkspaceExplorer({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate
+  onRegenerate,
+  onAskMentor
 }: {
   repository: GitHubRepositorySummary;
   intelligence: RepositoryKnowledgePackage | null;
   isGenerating: boolean;
   onRegenerate: () => void;
+  onAskMentor?: (concept: ConceptNode) => void;
 }) {
   const [activeView, setActiveView] = useState<ExplorerView>("architecture");
   const [learningMode, setLearningMode] = useState(false);
@@ -511,7 +513,11 @@ export function WorkspaceExplorer({
         {activeView === "contributions" ? <ContributionAreasView repository={repository} areas={areas} concepts={concepts} onSelect={(id) => setSelectedConceptId(id)} /> : null}
       </div>
 
-      <ModuleDetailPanel repository={repository} concept={selectedConcept} />
+      <ModuleDetailPanel
+        repository={repository}
+        concept={selectedConcept}
+        {...(onAskMentor ? { onAskMentor } : {})}
+      />
     </div>
   );
 }
@@ -742,7 +748,15 @@ function ContributionAreasView({
   );
 }
 
-function ModuleDetailPanel({ repository, concept }: { repository: GitHubRepositorySummary; concept: ConceptNode | null }) {
+function ModuleDetailPanel({
+  repository,
+  concept,
+  onAskMentor
+}: {
+  repository: GitHubRepositorySummary;
+  concept: ConceptNode | null;
+  onAskMentor?: (concept: ConceptNode) => void;
+}) {
   if (!concept) return null;
 
   const Icon = concept.icon;
@@ -771,11 +785,19 @@ function ModuleDetailPanel({ repository, concept }: { repository: GitHubReposito
           <DetailBlock title="OpenForge Insight">{concept.insight}</DetailBlock>
         </div>
 
-        <a href={repository.htmlUrl} target="_blank" rel="noreferrer" className="openforge-button mt-5 w-full">
-          <Github className="h-4 w-4" aria-hidden="true" />
-          Open in GitHub
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-        </a>
+        <div className="mt-5 grid gap-2">
+          {onAskMentor ? (
+            <Button type="button" variant="primary" onClick={() => onAskMentor(concept)} className="w-full">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Ask Mentor
+            </Button>
+          ) : null}
+          <a href={repository.htmlUrl} target="_blank" rel="noreferrer" className="openforge-button w-full">
+            <Github className="h-4 w-4" aria-hidden="true" />
+            Open in GitHub
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+        </div>
       </WorkspaceCard>
     </aside>
   );

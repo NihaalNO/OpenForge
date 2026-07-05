@@ -9,6 +9,15 @@ import {
 } from "@/lib/api/github";
 
 export type WorkspaceStatus = "loading" | "ready" | "empty" | "error";
+export type WorkspaceMentorSource = "workspace" | "explorer" | "mission" | "review" | "timeline";
+
+export interface WorkspaceMentorContext {
+  source: WorkspaceMentorSource;
+  category?: string;
+  conceptId?: string;
+  subject?: string;
+  prompt?: string;
+}
 
 interface WorkspaceContextValue {
   repository: GitHubRepositorySummary | null;
@@ -18,8 +27,9 @@ interface WorkspaceContextValue {
   status: WorkspaceStatus;
   error: string | null;
   futureMission: null;
-  futureMentor: null;
+  mentorContext: WorkspaceMentorContext;
   futureActivity: null;
+  setMentorContext: (context: WorkspaceMentorContext) => void;
   retry: () => Promise<void>;
   regenerateIntelligence: () => Promise<void>;
 }
@@ -40,6 +50,7 @@ export function WorkspaceProvider({
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mentorContext, setMentorContext] = useState<WorkspaceMentorContext>({ source: "workspace" });
 
   async function loadWorkspace(active = true) {
     setIsLoading(true);
@@ -111,12 +122,13 @@ export function WorkspaceProvider({
       status,
       error,
       futureMission: null,
-      futureMentor: null,
+      mentorContext,
       futureActivity: null,
+      setMentorContext,
       retry: () => loadWorkspace(),
       regenerateIntelligence
     };
-  }, [repository, intelligence, isLoading, isGenerating, error]);
+  }, [repository, intelligence, isLoading, isGenerating, error, mentorContext]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

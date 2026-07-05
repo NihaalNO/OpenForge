@@ -361,12 +361,14 @@ export function MissionEngine({
   repository,
   intelligence,
   isGenerating,
-  onRegenerate
+  onRegenerate,
+  onAskMentor
 }: {
   repository: GitHubRepositorySummary;
   intelligence: RepositoryKnowledgePackage | null;
   isGenerating: boolean;
   onRegenerate: () => void;
+  onAskMentor?: (prompt: string) => void;
 }) {
   const [activeSection, setActiveSection] = useState<MissionSectionId>("brief");
   const [started, setStarted] = useState(false);
@@ -477,6 +479,12 @@ export function MissionEngine({
                   <Play className="h-4 w-4" aria-hidden="true" />
                   {started ? "Resume Mission" : "Start Mission"}
                 </Button>
+                {onAskMentor ? (
+                  <Button type="button" onClick={() => onAskMentor("What should I understand first for this Mission?")}>
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    Ask Mentor
+                  </Button>
+                ) : null}
                 <Button type="button" onClick={saveMission}>
                   <Save className="h-4 w-4" aria-hidden="true" />
                   Save For Later

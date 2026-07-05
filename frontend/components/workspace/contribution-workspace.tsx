@@ -16,6 +16,7 @@ import {
 import { WorkspaceLauncher } from "./workspace-launcher";
 import { WorkspaceExplorer } from "./workspace-explorer";
 import { MissionEngine } from "./mission-engine";
+import { MentorEngine } from "./mentor-engine";
 import { WorkspaceOverview } from "./workspace-overview";
 
 export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo: string }) {
@@ -27,7 +28,7 @@ export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo
 }
 
 function ContributionWorkspace() {
-  const { repository, intelligence, isLoading, isGenerating, error, retry, regenerateIntelligence } = useWorkspace();
+  const { repository, intelligence, isLoading, isGenerating, error, retry, regenerateIntelligence, setMentorContext } = useWorkspace();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
 
   if (isLoading) return <WorkspaceLoader />;
@@ -53,6 +54,15 @@ function ContributionWorkspace() {
           intelligence={intelligence}
           isGenerating={isGenerating}
           onRegenerate={() => void regenerateIntelligence()}
+          onAskMentor={(concept) => {
+            setMentorContext({
+              source: "explorer",
+              conceptId: concept.id,
+              subject: concept.name,
+              prompt: `Help me understand ${concept.name} in this repository.`
+            });
+            setActiveTab("mentor");
+          }}
         />
       ) : activeTab === "mission" ? (
         <MissionEngine
@@ -60,6 +70,18 @@ function ContributionWorkspace() {
           intelligence={intelligence}
           isGenerating={isGenerating}
           onRegenerate={() => void regenerateIntelligence()}
+          onAskMentor={(prompt) => {
+            setMentorContext({ source: "mission", category: "mission", prompt });
+            setActiveTab("mentor");
+          }}
+        />
+      ) : activeTab === "mentor" ? (
+        <MentorEngine
+          repository={repository}
+          intelligence={intelligence}
+          isGenerating={isGenerating}
+          onRegenerate={() => void regenerateIntelligence()}
+          onOpenExplorer={() => setActiveTab("map")}
         />
       ) : (
         <WorkspacePlaceholder tab={activeTab} />
