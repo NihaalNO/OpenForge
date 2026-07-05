@@ -3,17 +3,17 @@
 import type { GitHubRepositorySummary } from "@openforge/shared";
 import {
   Activity,
+  ClipboardCheck,
   LayoutPanelTop,
   Map,
   MessageSquareText,
   Route,
-  ShieldCheck
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card, EmptyState, ErrorState } from "@/components/common/ui";
 import { cn } from "@/lib/utils";
 
-export type WorkspaceTab = "overview" | "map" | "mission" | "mentor" | "quality" | "activity";
+export type WorkspaceTab = "overview" | "map" | "mission" | "mentor" | "review" | "timeline";
 
 export const workspaceTabs: Array<{
   id: WorkspaceTab;
@@ -46,16 +46,16 @@ export const workspaceTabs: Array<{
     purpose: "Mentor guidance will answer repository questions using synced intelligence and future workspace context."
   },
   {
-    id: "quality",
-    label: "Quality Gate",
-    icon: ShieldCheck,
-    purpose: "Quality checks will help contributors verify setup, tests, CI expectations, and pull request preparation."
+    id: "review",
+    label: "Review",
+    icon: ClipboardCheck,
+    purpose: "Review helps contributors decide whether they are ready to open a pull request."
   },
   {
-    id: "activity",
-    label: "Activity",
+    id: "timeline",
+    label: "Timeline",
     icon: Activity,
-    purpose: "Activity will collect workspace events such as syncs, intelligence updates, and future mission progress."
+    purpose: "Timeline reflects contributor learning, review reflections, and workspace progress."
   }
 ];
 

@@ -17,6 +17,8 @@ import { WorkspaceLauncher } from "./workspace-launcher";
 import { WorkspaceExplorer } from "./workspace-explorer";
 import { MissionEngine } from "./mission-engine";
 import { MentorEngine } from "./mentor-engine";
+import { ReviewEngine } from "./review-engine";
+import { TimelineEngine } from "./timeline-engine";
 import { WorkspaceOverview } from "./workspace-overview";
 
 export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo: string }) {
@@ -83,6 +85,19 @@ function ContributionWorkspace() {
           onRegenerate={() => void regenerateIntelligence()}
           onOpenExplorer={() => setActiveTab("map")}
         />
+      ) : activeTab === "review" ? (
+        <ReviewEngine
+          repository={repository}
+          intelligence={intelligence}
+          isGenerating={isGenerating}
+          onRegenerate={() => void regenerateIntelligence()}
+          onAskMentor={(prompt) => {
+            setMentorContext({ source: "review", category: "contribution", prompt });
+            setActiveTab("mentor");
+          }}
+        />
+      ) : activeTab === "timeline" ? (
+        <TimelineEngine repository={repository} />
       ) : (
         <WorkspacePlaceholder tab={activeTab} />
       )}
