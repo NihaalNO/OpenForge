@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button, Card } from "@/components/common/ui";
 import { WorkspaceProvider, useWorkspace } from "./workspace-context";
 import {
@@ -31,7 +32,17 @@ export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo
 
 function ContributionWorkspace() {
   const { repository, intelligence, isLoading, isGenerating, error, retry, setMentorContext } = useWorkspace();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+    const validTabs: WorkspaceTab[] = ["overview", "map", "mission", "mentor", "review", "timeline"];
+
+    if (requestedTab && validTabs.includes(requestedTab as WorkspaceTab)) {
+      setActiveTab(requestedTab as WorkspaceTab);
+    }
+  }, [searchParams]);
 
   if (isLoading) return <WorkspaceLoader />;
   if (error && !repository) return <WorkspaceLoadError message={error} onRetry={() => void retry()} />;
