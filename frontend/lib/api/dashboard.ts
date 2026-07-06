@@ -3,7 +3,6 @@
 import type {
   DashboardAnalyticsResponse,
   DashboardResponse,
-  SavedIssuesResponse,
   SavedRepositoriesResponse
 } from "@openforge/shared";
 import { apiRequest } from "./client";
@@ -38,8 +37,4 @@ export async function fetchDashboardAnalytics(options: { force?: boolean } = {})
 
 export function fetchSavedRepositories() {
   return apiRequest<SavedRepositoriesResponse>("/dashboard/saved-repositories");
-}
-
-export function fetchSavedIssues() {
-  return apiRequest<SavedIssuesResponse>("/dashboard/saved-issues");
 }

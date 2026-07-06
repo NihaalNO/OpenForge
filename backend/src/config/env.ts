@@ -23,7 +23,6 @@ const envSchema = z.object({
   AI_DEFAULT_MODEL: z.string().optional(),
   AI_MAX_INPUT_TOKENS: z.coerce.number().int().positive().default(12000),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(2000),
-  AI_DAILY_USER_BUDGET_USD: z.coerce.number().positive().default(1),
   REPO_INTEL_MAX_TREE_ENTRIES: z.coerce.number().int().positive().default(3000),
   REPO_INTEL_MAX_FILES: z.coerce.number().int().positive().default(25),
   REPO_INTEL_MAX_FILE_BYTES: z.coerce.number().int().positive().default(80 * 1024),

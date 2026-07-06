@@ -15,6 +15,16 @@ begin
     drop policy if exists "Users can manage own repository intelligence" on public.repository_intelligence;
     drop trigger if exists set_repository_intelligence_updated_at on public.repository_intelligence;
   end if;
+
+  if to_regclass('public.saved_issues') is not null then
+    drop policy if exists "Users can manage own saved issues" on public.saved_issues;
+    drop trigger if exists set_saved_issues_updated_at on public.saved_issues;
+  end if;
+
+  if to_regclass('public.ai_analysis_logs') is not null then
+    drop policy if exists "Users can read own ai logs" on public.ai_analysis_logs;
+    drop trigger if exists set_ai_analysis_logs_updated_at on public.ai_analysis_logs;
+  end if;
 end $$;
 
 drop index if exists public.idx_repository_recommendations_user_score;
@@ -24,20 +34,18 @@ drop index if exists public.idx_issue_recommendations_user_status;
 drop index if exists public.idx_repository_intelligence_user_generated;
 drop index if exists public.idx_repository_intelligence_repository_status;
 drop index if exists public.idx_repository_intelligence_detected_stack;
+drop index if exists public.idx_saved_issues_user_status;
+drop index if exists public.idx_saved_issues_user_created;
+drop index if exists public.idx_ai_analysis_logs_user_created;
+drop index if exists public.idx_ai_analysis_logs_repository_type;
+drop index if exists public.idx_ai_analysis_logs_issue_type;
+drop index if exists public.idx_ai_analysis_logs_status;
 
 drop table if exists public.repository_recommendations;
 drop table if exists public.issue_recommendations;
 drop table if exists public.repository_intelligence;
-
-delete from public.ai_analysis_logs
-where analysis_type = 'contribution_plan';
-
-alter table public.ai_analysis_logs
-  drop constraint if exists ai_analysis_logs_analysis_type_check;
-
-alter table public.ai_analysis_logs
-  add constraint ai_analysis_logs_analysis_type_check
-  check (analysis_type in ('issue_explanation', 'roadmap', 'skill_gap'));
+drop table if exists public.saved_issues;
+drop table if exists public.ai_analysis_logs;
 
 drop index if exists public.idx_github_repositories_health_score;
 drop index if exists public.idx_github_issues_difficulty;

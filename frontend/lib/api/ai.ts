@@ -2,8 +2,7 @@
 
 import type {
   AiAnalysisResponse,
-  AiLearningRoadmap,
-  AiLogsResponse
+  AiLearningRoadmap
 } from "@openforge/shared";
 import { apiRequest } from "./client";
 
@@ -12,9 +11,5 @@ export function generateLearningRoadmap(regenerate = false) {
     method: "POST",
     body: JSON.stringify({ regenerate })
   });
-}
-
-export function fetchAiLogs() {
-  return apiRequest<AiLogsResponse>("/ai/logs");
 }
 

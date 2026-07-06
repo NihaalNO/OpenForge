@@ -1,12 +1,9 @@
 import type {
-  AiIssueExplanation,
   DashboardActivityItem,
   DashboardAnalyticsResponse,
   DashboardResponse,
-  GitHubIssueSummary,
   GitHubProfileResponse,
   GitHubRepositorySummary,
-  SavedIssuesResponse,
   SavedRepositoriesResponse
 } from "@openforge/shared";
 import { getCurrentUser } from "../repositories/user.repository.js";
@@ -39,25 +36,6 @@ interface RepositoryRow {
   raw_data?: { visibility?: string | null; private?: boolean | null } | null;
 }
 
-interface IssueRow {
-  id: string;
-  repository_id: string;
-  issue_number: number;
-  title: string;
-  body: string | null;
-  html_url: string;
-  state: "open" | "closed";
-  labels: string[] | null;
-  author_login: string | null;
-  assignee_logins: string[] | null;
-  comments_count: number;
-  good_first_issue: boolean;
-  help_wanted: boolean;
-  github_created_at: string | null;
-  github_updated_at: string | null;
-  last_synced_at: string | null;
-}
-
 function toRepositorySummary(row: RepositoryRow): GitHubRepositorySummary {
   return {
     id: row.id,
@@ -82,27 +60,6 @@ function toRepositorySummary(row: RepositoryRow): GitHubRepositorySummary {
     parentRepositoryFullName: row.parent_repository_full_name ?? null,
     source: row.source ?? "github_sync",
     pushedAt: row.pushed_at,
-    githubUpdatedAt: row.github_updated_at,
-    lastSyncedAt: row.last_synced_at
-  };
-}
-
-function toIssueSummary(row: IssueRow): GitHubIssueSummary {
-  return {
-    id: row.id,
-    repositoryId: row.repository_id,
-    number: row.issue_number,
-    title: row.title,
-    body: row.body,
-    htmlUrl: row.html_url,
-    state: row.state,
-    labels: row.labels ?? [],
-    authorLogin: row.author_login,
-    assigneeLogins: row.assignee_logins ?? [],
-    commentsCount: row.comments_count,
-    goodFirstIssue: row.good_first_issue,
-    helpWanted: row.help_wanted,
-    githubCreatedAt: row.github_created_at,
     githubUpdatedAt: row.github_updated_at,
     lastSyncedAt: row.last_synced_at
   };
@@ -241,53 +198,6 @@ export class DashboardService {
     return { repositories };
   }
 
-  async getSavedIssues(userId: string): Promise<SavedIssuesResponse> {
-    const { data, error } = await this.supabase
-      .from("saved_issues")
-      .select("id,created_at,status,issue:github_issues(*,repository:github_repositories(id,full_name,owner_login,name,primary_language))")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    const rows = ((data ?? []) as unknown as Array<{
-        id: string;
-        created_at: string;
-        status: string;
-        issue: (IssueRow & {
-          repository: {
-            id: string;
-            full_name: string;
-            owner_login: string;
-            name: string;
-            primary_language: string | null;
-          } | null;
-        }) | null;
-      }>).filter((row) => row.issue?.repository);
-    const issues = await Promise.all(
-      rows.map(async (row) => ({
-        id: row.id,
-        savedAt: row.created_at,
-        status: row.status,
-        issue: {
-          ...toIssueSummary(row.issue!),
-          cachedAiExplanation: await this.getCachedIssueExplanation(row.issue!.id),
-          repository: {
-            id: row.issue!.repository!.id,
-            fullName: row.issue!.repository!.full_name,
-            ownerLogin: row.issue!.repository!.owner_login,
-            name: row.issue!.repository!.name,
-            primaryLanguage: row.issue!.repository!.primary_language
-          }
-        }
-      }))
-    );
-
-    return { issues };
-  }
-
   private async getGitHubProfile(userId: string): Promise<GitHubProfileResponse["profile"] | null> {
     const { data, error } = await this.supabase
       .from("github_accounts")
@@ -415,23 +325,6 @@ export class DashboardService {
     }));
   }
 
-  private async getCachedIssueExplanation(issueId: string) {
-    const { data, error } = await this.supabase
-      .from("ai_analysis_logs")
-      .select("response_payload")
-      .eq("issue_id", issueId)
-      .eq("analysis_type", "issue_explanation")
-      .eq("status", "completed")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    return (data?.response_payload as AiIssueExplanation | undefined) ?? null;
-  }
 }
 
 export const dashboardService = new DashboardService();

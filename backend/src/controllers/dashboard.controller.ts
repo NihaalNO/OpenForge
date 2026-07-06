@@ -21,7 +21,3 @@ export async function getDashboardAnalytics(req: Request, res: Response) {
 export async function getSavedRepositories(req: Request, res: Response) {
   res.json(await dashboardService.getSavedRepositories(requireUserId(req)));
 }
-
-export async function getSavedIssues(req: Request, res: Response) {
-  res.json(await dashboardService.getSavedIssues(requireUserId(req)));
-}

@@ -18,7 +18,3 @@ export async function generateLearningRoadmap(req: Request, res: Response) {
   res.json(await aiService.generateLearningRoadmap(requireUserId(req), shouldRegenerate(req)));
 }
 
-export async function listAiLogs(req: Request, res: Response) {
-  res.json(await aiService.listLogs(requireUserId(req)));
-}
-

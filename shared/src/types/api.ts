@@ -238,15 +238,6 @@ export interface SkillProfileResponse {
   skillProfile: SkillProfileSummary | null;
 }
 
-export interface AiIssueExplanation {
-  summary: string;
-  requiredKnowledge: string[];
-  likelyFiles: string[];
-  suggestedApproach: string[];
-  difficultyEstimate: "beginner" | "intermediate" | "advanced";
-  learningOutcome: string;
-}
-
 export interface AiLearningRoadmap {
   currentSkills: string[];
   missingSkills: string[];
@@ -262,20 +253,6 @@ export interface AiLearningRoadmap {
 export interface AiAnalysisResponse<TPayload> {
   analysis: TPayload;
   cached: boolean;
-  logId: string;
-}
-
-export interface AiLogSummary {
-  id: string;
-  analysisType: string;
-  provider: string;
-  model: string;
-  status: string;
-  createdAt: string;
-}
-
-export interface AiLogsResponse {
-  logs: AiLogSummary[];
 }
 
 export interface DashboardActivityItem {
@@ -324,26 +301,6 @@ export interface SavedRepositoryItem {
 
 export interface SavedRepositoriesResponse {
   repositories: SavedRepositoryItem[];
-}
-
-export interface SavedIssueItem {
-  id: string;
-  savedAt: string;
-  status: string;
-  issue: GitHubIssueSummary & {
-    cachedAiExplanation: AiIssueExplanation | null;
-    repository: {
-      id: string;
-      fullName: string;
-      ownerLogin: string;
-      name: string;
-      primaryLanguage: string | null;
-    };
-  };
-}
-
-export interface SavedIssuesResponse {
-  issues: SavedIssueItem[];
 }
 
 export interface NotificationItem {
