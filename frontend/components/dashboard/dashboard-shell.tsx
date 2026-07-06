@@ -140,7 +140,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [intelligence, setIntelligence] = useState<RepositoryKnowledgePackage | null>(null);
   const [repositoryLoading, setRepositoryLoading] = useState(false);
   const activeRepository = useMemo(() => getActiveRepositoryFromPath(pathname), [pathname]);
-  const activeWorkspaceTab = searchParams.get("tab") ?? "overview";
+  const activeWorkspaceTab = searchParams.get("tab") ?? "map";
 
   useEffect(() => {
     let active = true;

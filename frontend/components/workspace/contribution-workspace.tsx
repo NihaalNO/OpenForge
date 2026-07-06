@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, Card } from "@/components/common/ui";
 import { WorkspaceProvider, useWorkspace } from "./workspace-context";
@@ -11,7 +11,6 @@ import {
   WorkspaceLayout,
   WorkspaceLoader,
   WorkspacePlaceholder,
-  WorkspaceTabBar,
   type WorkspaceTab
 } from "./workspace-components";
 import { WorkspaceLauncher } from "./workspace-launcher";
@@ -20,7 +19,6 @@ import { MissionEngine } from "./mission-engine";
 import { MentorEngine } from "./mentor-engine";
 import { ReviewEngine } from "./review-engine";
 import { TimelineEngine } from "./timeline-engine";
-import { WorkspaceOverview } from "./workspace-overview";
 
 export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo: string }) {
   return (
@@ -32,15 +30,23 @@ export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo
 
 function ContributionWorkspace() {
   const { repository, intelligence, isLoading, isGenerating, error, retry, setMentorContext } = useWorkspace();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("map");
+
+  function changeTab(tab: WorkspaceTab) {
+    setActiveTab(tab);
+    router.replace(`?tab=${tab}`, { scroll: false });
+  }
 
   useEffect(() => {
     const requestedTab = searchParams.get("tab");
-    const validTabs: WorkspaceTab[] = ["overview", "map", "mission", "mentor", "review", "timeline"];
+    const validTabs: WorkspaceTab[] = ["map", "mission", "mentor", "review", "timeline"];
 
     if (requestedTab && validTabs.includes(requestedTab as WorkspaceTab)) {
       setActiveTab(requestedTab as WorkspaceTab);
+    } else if (!requestedTab) {
+      setActiveTab("map");
     }
   }, [searchParams]);
 
@@ -52,15 +58,7 @@ function ContributionWorkspace() {
     <WorkspaceLayout>
       <WorkspaceHeader repository={repository} />
       {error ? <WorkspaceError message={error} /> : null}
-      <WorkspaceTabBar activeTab={activeTab} onChange={setActiveTab} />
-      {activeTab === "overview" ? (
-        <WorkspaceOverview
-          repository={repository}
-          intelligence={intelligence}
-          isGenerating={isGenerating}
-          onStartMission={() => setActiveTab("mission")}
-        />
-      ) : activeTab === "map" ? (
+      {activeTab === "map" ? (
         <WorkspaceExplorer
           repository={repository}
           intelligence={intelligence}
@@ -72,7 +70,7 @@ function ContributionWorkspace() {
               subject: concept.name,
               prompt: `Help me understand ${concept.name} in this repository.`
             });
-            setActiveTab("mentor");
+            changeTab("mentor");
           }}
         />
       ) : activeTab === "mission" ? (
@@ -82,7 +80,7 @@ function ContributionWorkspace() {
           isGenerating={isGenerating}
           onAskMentor={(prompt) => {
             setMentorContext({ source: "mission", category: "mission", prompt });
-            setActiveTab("mentor");
+            changeTab("mentor");
           }}
         />
       ) : activeTab === "mentor" ? (
@@ -90,7 +88,7 @@ function ContributionWorkspace() {
           repository={repository}
           intelligence={intelligence}
           isGenerating={isGenerating}
-          onOpenExplorer={() => setActiveTab("map")}
+          onOpenExplorer={() => changeTab("map")}
         />
       ) : activeTab === "review" ? (
         <ReviewEngine
@@ -99,7 +97,7 @@ function ContributionWorkspace() {
           isGenerating={isGenerating}
           onAskMentor={(prompt) => {
             setMentorContext({ source: "review", category: "contribution", prompt });
-            setActiveTab("mentor");
+            changeTab("mentor");
           }}
         />
       ) : activeTab === "timeline" ? (
@@ -147,8 +145,6 @@ export {
   WorkspaceLoader,
   WorkspaceLoading,
   WorkspacePlaceholder,
-  WorkspaceShell,
-  WorkspaceTabBar,
-  WorkspaceTabs
+  WorkspaceShell
 } from "./workspace-components";
 

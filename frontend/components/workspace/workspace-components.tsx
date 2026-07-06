@@ -4,7 +4,6 @@ import type { GitHubRepositorySummary } from "@openforge/shared";
 import {
   Activity,
   ClipboardCheck,
-  LayoutPanelTop,
   Map,
   MessageSquareText,
   Route,
@@ -13,20 +12,14 @@ import type { ReactNode } from "react";
 import { Card, EmptyState, ErrorState } from "@/components/common/ui";
 import { cn } from "@/lib/utils";
 
-export type WorkspaceTab = "overview" | "map" | "mission" | "mentor" | "review" | "timeline";
+export type WorkspaceTab = "map" | "mission" | "mentor" | "review" | "timeline";
 
-export const workspaceTabs: Array<{
+const workspaceSections: Array<{
   id: WorkspaceTab;
   label: string;
-  icon: typeof LayoutPanelTop;
+  icon: typeof Map;
   purpose: string;
 }> = [
-  {
-    id: "overview",
-    label: "Home",
-    icon: LayoutPanelTop,
-    purpose: "Repository onboarding, contributor readiness, and the clearest first path."
-  },
   {
     id: "map",
     label: "Explorer",
@@ -191,49 +184,8 @@ function WorkspaceMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function WorkspaceTabBar({
-  activeTab,
-  onChange
-}: {
-  activeTab: WorkspaceTab;
-  onChange: (tab: WorkspaceTab) => void;
-}) {
-  return (
-    <div className="overflow-x-auto rounded-[24px] border border-border bg-card p-2">
-      <div className="flex min-w-max gap-2">
-        {workspaceTabs.map((tab) => {
-          const Icon = tab.icon;
-          const active = tab.id === activeTab;
-
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onChange(tab.id)}
-              className={cn(
-                "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                active ? "bg-soft-blue-wash text-foreground" : "text-muted-foreground hover:bg-background hover:text-foreground"
-              )}
-            >
-              <Icon className={cn("h-4 w-4", active && "text-brand-violet")} aria-hidden="true" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-export function WorkspaceTabs(props: {
-  activeTab: WorkspaceTab;
-  onChange: (tab: WorkspaceTab) => void;
-}) {
-  return <WorkspaceTabBar {...props} />;
-}
-
-export function WorkspacePlaceholder({ tab }: { tab: Exclude<WorkspaceTab, "overview"> }) {
-  const definition = workspaceTabs.find((item) => item.id === tab);
+export function WorkspacePlaceholder({ tab }: { tab: WorkspaceTab }) {
+  const definition = workspaceSections.find((item) => item.id === tab);
   const Icon = definition?.icon;
 
   return (
