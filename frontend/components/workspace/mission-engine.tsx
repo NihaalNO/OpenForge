@@ -3,6 +3,7 @@
 import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
   AlertTriangle,
+  ArrowDown,
   BookOpenCheck,
   CheckCircle2,
   ChevronDown,
@@ -25,7 +26,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Badge, Button, EmptyState } from "@/components/common/ui";
-import { PathVisualization, ProcedureFlow, type ProcedureStep } from "@/components/visualizations";
 import { cn } from "@/lib/utils";
 import { WorkspaceCard } from "./workspace-components";
 
@@ -555,14 +555,25 @@ export function MissionEngine({
             </div>
           </div>
           <div className="mt-5 grid gap-3">
-            <PathVisualization
-              orientation="vertical"
-              steps={milestones.map((milestone) => ({
-                id: milestone.label,
-                title: milestone.label,
-                status: milestone.complete ? "complete" : "pending"
-              }))}
-            />
+            {milestones.map((milestone, index) => (
+              <div key={milestone.label}>
+                <div className="flex items-center gap-3 rounded-[18px] border border-border bg-background p-3">
+                  {milestone.complete ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  ) : (
+                    <span className="h-4 w-4 shrink-0 rounded-full border border-muted-foreground/40" />
+                  )}
+                  <span className={cn("text-sm", milestone.complete ? "font-medium text-foreground" : "text-muted-foreground")}>
+                    {milestone.label}
+                  </span>
+                </div>
+                {index < milestones.length - 1 ? (
+                  <div className="flex h-5 items-center pl-5">
+                    <ArrowDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </div>
           {!beforeComplete ? (
             <div className="mt-5 rounded-[18px] border border-amber-200 bg-amber-50 p-4 text-amber-800">
@@ -700,27 +711,47 @@ function ExecutionPlan({
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="Execution Plan" title="Move from understanding to pull request preparation." />
-      <ProcedureFlow
-        className="mt-6"
-        steps={stages.map((stage, index): ProcedureStep => ({
-          id: stage.id,
-          title: stage.name,
-          description: stage.goal,
-          status: completedStages[stage.id] ? "complete" : index === 0 ? "active" : "pending",
-          duration: index === 0 ? "10-15 min" : index === stages.length - 1 ? "15 min" : "30-60 min",
-          dependencies: index === 0 ? [] : [stages[index - 1]?.name ?? "Previous step"],
-          details: [
-            `Expected outcome: ${stage.outcome}`,
-            stage.files.length ? `Suggested files: ${stage.files.slice(0, 4).join(", ")}` : "Suggested files: none detected",
-            stage.docs.length ? `Related documentation: ${stage.docs.slice(0, 4).join(", ")}` : "Related documentation: none detected"
-          ],
-          action: {
-            label: completedStages[stage.id] ? "Mark Incomplete" : "Mark Done",
-            onClick: () => onToggle(stage.id)
-          }
-        }))}
-      />
+      <div className="mt-6 grid gap-3">
+        {stages.map((stage, index) => (
+          <div key={stage.id}>
+            <div className="grid gap-4 rounded-[18px] border border-border bg-background p-4 lg:grid-cols-[52px_1fr_auto]">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-soft-blue-wash text-sm font-semibold text-brand-violet">
+                {index + 1}
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-foreground">{stage.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{stage.goal}</p>
+                <StageList label="Suggested files" items={stage.files} />
+                <StageList label="Related documentation" items={stage.docs} />
+                <p className="mt-3 text-sm leading-6 text-foreground">
+                  <span className="font-medium">Expected outcome:</span> {stage.outcome}
+                </p>
+              </div>
+              <Button type="button" onClick={() => onToggle(stage.id)} className="self-start">
+                <CheckCircle2 className={cn("h-4 w-4", completedStages[stage.id] && "text-emerald-600")} aria-hidden="true" />
+                {completedStages[stage.id] ? "Complete" : "Mark Done"}
+              </Button>
+            </div>
+            {index < stages.length - 1 ? (
+              <div className="flex h-8 items-center pl-6">
+                <ArrowDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </WorkspaceCard>
+  );
+}
+
+function StageList({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {items.length ? items.slice(0, 6).map((item) => <Badge key={`${label}-${item}`} className="break-all">{item}</Badge>) : <Badge>None detected</Badge>}
+      </div>
+    </div>
   );
 }
 

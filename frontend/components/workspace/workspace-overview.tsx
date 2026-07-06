@@ -3,6 +3,7 @@
 import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
   AlertTriangle,
+  ArrowDown,
   ArrowRight,
   BookOpen,
   CheckCircle2,
@@ -24,7 +25,6 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Badge, Button, EmptyState } from "@/components/common/ui";
-import { DecisionFlow, PathVisualization } from "@/components/visualizations";
 import { cn } from "@/lib/utils";
 import { relationshipLabel, WorkspaceCard } from "./workspace-components";
 
@@ -490,59 +490,22 @@ export function WhyRecommendedSection({
   repository: GitHubRepositorySummary;
   intelligence: RepositoryKnowledgePackage;
 }) {
-  const ratings = recommendationRatings(repository, intelligence);
-
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="Why OpenForge Recommends This Project" title="The opinion, with reasons attached." />
-      <div className="mt-5 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <DecisionFlow
-          title="Recommendation path"
-          nodes={[
-            {
-              id: "ready",
-              title: "Repository ready?",
-              description: readinessModel(intelligence).answer,
-              status: readinessModel(intelligence).tone === "positive" ? "complete" : readinessModel(intelligence).tone === "prepare" ? "active" : "blocked",
-              branch: readinessModel(intelligence).tone === "blocked" ? "no" : "yes"
-            },
-            {
-              id: "docs",
-              title: "Documentation signal?",
-              description: ratings[0]?.explanation,
-              status: ratings[0]?.rating === "Needs care" ? "blocked" : "complete",
-              branch: ratings[0]?.rating === "Needs care" ? "maybe" : "yes"
-            },
-            {
-              id: "architecture",
-              title: "Architecture understandable?",
-              description: ratings[1]?.explanation,
-              status: ratings[1]?.rating === "Needs care" ? "active" : "complete",
-              branch: ratings[1]?.rating === "Needs care" ? "maybe" : "yes"
-            },
-            {
-              id: "mission",
-              title: "Start Mission",
-              description: "OpenForge recommends a narrow contribution path instead of a broad repository tour.",
-              status: "active",
-              branch: "yes"
-            }
-          ]}
-        />
-        <div className="grid gap-3">
-          {ratings.map((item) => (
-            <div key={item.label} className="rounded-[18px] border border-border bg-background p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground">{item.label}</p>
-                <Badge>{item.rating}</Badge>
-              </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-brand-violet" style={{ width: ratingWidth(item.rating) }} />
-              </div>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.explanation}</p>
+      <div className="mt-5 grid gap-3 lg:grid-cols-2">
+        {recommendationRatings(repository, intelligence).map((item) => (
+          <div key={item.label} className="rounded-[18px] border border-border bg-background p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-foreground">{item.label}</p>
+              <Badge>{item.rating}</Badge>
             </div>
-          ))}
-        </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-brand-violet" style={{ width: ratingWidth(item.rating) }} />
+            </div>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.explanation}</p>
+          </div>
+        ))}
       </div>
     </WorkspaceCard>
   );
@@ -554,16 +517,26 @@ export function FirstFifteenMinutesSection({ intelligence }: { intelligence: Rep
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="Your First 15 Minutes" title="A short path from arrival to orientation." />
-      <PathVisualization
-        className="mt-5"
-        steps={steps.map((step, index) => ({
-          id: step.title,
-          title: step.title,
-          description: step.detail,
-          status: index === 0 ? "active" : index === steps.length - 1 ? "pending" : "pending",
-          meta: index === 0 ? "Start here" : index === steps.length - 1 ? "Ready" : "Next"
-        }))}
-      />
+      <div className="mt-5 grid gap-3">
+        {steps.map((step, index) => (
+          <div key={step.title}>
+            <div className="grid gap-3 rounded-[18px] border border-border bg-background p-4 sm:grid-cols-[44px_1fr]">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-soft-blue-wash text-sm font-semibold text-brand-violet">
+                {index + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-foreground">{step.title}</span>
+                <span className="mt-1 block break-words text-sm leading-6 text-muted-foreground">{step.detail}</span>
+              </span>
+            </div>
+            {index < steps.length - 1 ? (
+              <div className="flex h-8 items-center pl-5 sm:pl-6">
+                <ArrowDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </WorkspaceCard>
   );
 }

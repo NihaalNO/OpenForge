@@ -2,6 +2,8 @@
 
 import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
 import {
+  ArrowDown,
+  ArrowRight,
   BookOpen,
   Boxes,
   BrainCircuit,
@@ -27,7 +29,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Badge, Button, EmptyState } from "@/components/common/ui";
-import { ExplorableGraph, PathVisualization, type GraphEdge, type GraphNode } from "@/components/visualizations";
 import { cn } from "@/lib/utils";
 import { WorkspaceCard } from "./workspace-components";
 
@@ -413,35 +414,6 @@ function firstInsight(concepts: ConceptNode[]) {
   return concepts.find((concept) => concept.id === "auth")?.insight ?? concepts.find((concept) => concept.strength === "primary")?.insight ?? "Start with the README, entry point, and tests before opening individual files.";
 }
 
-function graphFromConcepts(concepts: ConceptNode[]): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const nodes = concepts.map((concept): GraphNode => ({
-    id: concept.id,
-    label: concept.name,
-    description: concept.purpose,
-    kind: concept.strength,
-    meta: [
-      `${concept.relatedFiles.length} files`,
-      `${concept.relatedDocs.length} docs`,
-      `${concept.relatedTests.length} tests`
-    ],
-    preview: concept.insight
-  }));
-  const byName = new Map(concepts.map((concept) => [concept.name.toLowerCase(), concept.id]));
-  const edges = concepts.flatMap((concept) => concept.dependencies.map((dependency) => {
-    const target = byName.get(dependency.toLowerCase());
-    if (!target) return null;
-    return {
-      id: `${concept.id}-${target}`,
-      source: concept.id,
-      target,
-      label: dependency,
-      strength: concept.strength === "primary" ? "primary" as const : "secondary" as const
-    };
-  })).filter(Boolean) as GraphEdge[];
-
-  return { nodes, edges };
-}
-
 export function WorkspaceExplorer({
   repository,
   intelligence,
@@ -551,21 +523,47 @@ function ArchitectureView({
   selectedId: ConceptKind | null;
   onSelect: (id: ConceptKind) => void;
 }) {
-  const graph = graphFromConcepts(architecture);
-
   return (
     <WorkspaceCard>
       <SectionTitle eyebrow="Architecture" title="Relationships before folders.">
         Read this as a system map: product surface, contracts, behavior, storage, and operational support.
       </SectionTitle>
-      <ExplorableGraph
-        className="mt-6"
-        nodes={graph.nodes}
-        edges={graph.edges}
-        selectedId={selectedId}
-        onSelect={(id) => onSelect(id as ConceptKind)}
-        ariaLabel="Architecture flow"
-      />
+      <div className="mt-6 grid gap-3">
+        {architecture.map((concept, index) => {
+          const Icon = concept.icon;
+          const active = selectedId === concept.id;
+
+          return (
+            <div key={concept.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(concept.id)}
+                className={cn(
+                  "grid w-full cursor-pointer gap-4 rounded-[24px] border bg-background p-4 text-left transition-colors sm:grid-cols-[48px_1fr_auto]",
+                  active ? "border-brand-violet/50 bg-soft-blue-wash/45" : "border-border hover:border-brand-violet/40 hover:bg-card"
+                )}
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-card text-brand-violet">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-base font-semibold text-foreground">{concept.name}</span>
+                  <span className="mt-1 block text-sm leading-6 text-muted-foreground">{concept.purpose}</span>
+                  <span className="mt-3 flex flex-wrap gap-2">
+                    {concept.dependencies.slice(0, 4).map((dependency) => <Badge key={dependency}>{dependency}</Badge>)}
+                  </span>
+                </span>
+                <ArrowRight className="h-4 w-4 self-center text-brand-violet" aria-hidden="true" />
+              </button>
+              {index < architecture.length - 1 ? (
+                <div className="flex h-8 items-center pl-6">
+                  <ArrowDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
     </WorkspaceCard>
   );
 }
@@ -579,21 +577,41 @@ function KnowledgeMapView({
   selectedId: ConceptKind | null;
   onSelect: (id: ConceptKind) => void;
 }) {
-  const graph = graphFromConcepts(concepts);
-
   return (
     <WorkspaceCard>
       <SectionTitle eyebrow="Knowledge Map" title="Concepts first, files second.">
         Each node teaches purpose, dependencies, docs, tests, and related implementation areas.
       </SectionTitle>
-      <ExplorableGraph
-        className="mt-6"
-        nodes={graph.nodes}
-        edges={graph.edges}
-        selectedId={selectedId}
-        onSelect={(id) => onSelect(id as ConceptKind)}
-        ariaLabel="Knowledge graph"
-      />
+      <div className="mt-6 grid gap-3 md:grid-cols-2">
+        {concepts.map((concept) => {
+          const Icon = concept.icon;
+
+          return (
+            <button
+              key={concept.id}
+              type="button"
+              onClick={() => onSelect(concept.id)}
+              className={cn(
+                "min-h-44 cursor-pointer rounded-[24px] border bg-background p-4 text-left transition-colors hover:border-brand-violet/40 hover:bg-card",
+                selectedId === concept.id && "border-brand-violet/50 bg-soft-blue-wash/45"
+              )}
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-soft-blue-wash text-brand-violet">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <span className="text-base font-semibold text-foreground">{concept.name}</span>
+              </span>
+              <span className="mt-4 block text-sm leading-6 text-muted-foreground">{concept.purpose}</span>
+              <span className="mt-4 flex flex-wrap gap-2">
+                <Badge>{concept.dependencies.length} dependencies</Badge>
+                <Badge>{concept.relatedDocs.length} docs</Badge>
+                <Badge>{concept.relatedTests.length} tests</Badge>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </WorkspaceCard>
   );
 }
@@ -622,17 +640,31 @@ function ReadingJourneyView({
           </div>
         </div>
       ) : null}
-      <PathVisualization
-        className="mt-6"
-        steps={journey.map((step, index) => ({
-          id: `${step.title}-${step.target}`,
-          title: step.title,
-          description: step.why,
-          meta: step.target,
-          status: index === 0 ? "active" : "pending",
-          onSelect: step.conceptId ? () => onSelect(step.conceptId as ConceptKind) : undefined
-        }))}
-      />
+      <div className="mt-6 grid gap-3">
+        {journey.map((step, index) => (
+          <div key={`${step.title}-${step.target}`}>
+            <button
+              type="button"
+              onClick={() => step.conceptId ? onSelect(step.conceptId) : undefined}
+              className="grid w-full cursor-pointer gap-4 rounded-[24px] border border-border bg-background p-4 text-left transition-colors hover:border-brand-violet/40 hover:bg-card sm:grid-cols-[44px_1fr]"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-soft-blue-wash text-sm font-semibold text-brand-violet">
+                {index + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-foreground">{step.title}</span>
+                <span className="mt-1 block break-words text-sm text-brand-violet">{step.target}</span>
+                <span className="mt-2 block text-sm leading-6 text-muted-foreground">{step.why}</span>
+              </span>
+            </button>
+            {index < journey.length - 1 ? (
+              <div className="flex h-8 items-center pl-5 sm:pl-6">
+                <ArrowDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </WorkspaceCard>
   );
 }
