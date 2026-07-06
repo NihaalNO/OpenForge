@@ -238,23 +238,6 @@ export interface SkillProfileResponse {
   skillProfile: SkillProfileSummary | null;
 }
 
-export interface AiLearningRoadmap {
-  currentSkills: string[];
-  missingSkills: string[];
-  weeklyRoadmap: Array<{
-    week: number;
-    focus: string;
-    tasks: string[];
-  }>;
-  suggestedRepositories: string[];
-  suggestedIssues: string[];
-}
-
-export interface AiAnalysisResponse<TPayload> {
-  analysis: TPayload;
-  cached: boolean;
-}
-
 export interface DashboardActivityItem {
   id: string;
   type: string;
@@ -272,7 +255,6 @@ export interface DashboardResponse {
     forkedRepositories: number;
     contributedRepositories: number;
     workspaceInsightsGenerated: number;
-    learningRoadmapStatus: "not_generated" | "active" | "completed" | "archived";
     unreadNotifications: number;
   };
   recentActivity: DashboardActivityItem[];

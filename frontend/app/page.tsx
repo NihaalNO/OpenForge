@@ -1,6 +1,5 @@
 import {
   Bell,
-  BookOpen,
   CheckCircle2,
   Code2,
   Compass,
@@ -36,14 +35,14 @@ const solutions: Array<[string, string, LucideIcon]> = [
   ["Sync GitHub data", "Bring repositories, languages, topics, and contribution context into one calm workspace.", Github],
   ["Understand repositories", "Summarize structure, signals, and entry points before you spend hours exploring.", Code2],
   ["Open the workspace", "Move from synced repository context into a mission timeline, mentor prompts, and quality gates.", Sparkles],
-  ["Build a learning roadmap", "Turn skill gaps into weekly practice steps tied to real open-source work.", BookOpen]
+  ["Follow the mission timeline", "Turn repository context into focused steps for the next pull request.", Route]
 ];
 
 const features: Array<[string, string, LucideIcon]> = [
   ["GitHub Data Workspace", "A focused view of owned, forked, contributed, and organization repositories.", Github],
   ["Workspace Home", "Repository overview, first steps, and OpenForge insight in one starting point.", Code2],
   ["Contribution Workspace", "Repository-specific missions that turn uncertainty into next actions.", Route],
-  ["Learning Roadmap", "Week-by-week skill building shaped by your GitHub profile and target projects.", BookOpen],
+  ["Mission, Mentor, Timeline", "Learning guidance lives inside the repository workflow where it can stay actionable.", Sparkles],
   ["Smart Notifications", "Useful updates for syncs, updates, and generated plans without dashboard noise.", Bell],
   ["User Settings & AI Preferences", "Control display, GitHub sync status, provider choices, and output detail.", Settings]
 ];

@@ -54,7 +54,7 @@ export function NotificationsCenter() {
       <PageHeader
         eyebrow="Notifications"
         title="Notification center"
-        description="Updates for GitHub syncs, workspace preparation, generated plans, and roadmap work."
+        description="Updates for GitHub syncs, workspace preparation, generated plans, and repository activity."
         actions={
           <Button type="button" onClick={() => void markAllRead()}>
             Mark all as read

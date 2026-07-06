@@ -163,7 +163,7 @@ export function ProductMockup() {
               Compass
             </div>
             <div className="mt-8 space-y-2">
-              {["Overview", "GitHub Data", "Workspace", "Roadmap"].map((item, index) => (
+              {["Overview", "GitHub Data", "Workspace", "Notifications"].map((item, index) => (
                 <div
                   key={item}
                   className={cn(
@@ -232,7 +232,7 @@ export function ProductMockup() {
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Card className="p-4">
-                <p className="text-sm font-semibold">Learning roadmap</p>
+                <p className="text-sm font-semibold">Mission timeline</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["TypeScript", "Testing", "Next.js"].map((skill) => (
                     <Badge key={skill}>{skill}</Badge>

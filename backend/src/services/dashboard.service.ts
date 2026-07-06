@@ -79,16 +79,6 @@ function sumRecord(records: Array<Record<string, number> | null | undefined>) {
     .sort((a, b) => b.value - a.value);
 }
 
-function toRoadmapStatus(
-  status: string | null | undefined
-): "not_generated" | "active" | "completed" | "archived" {
-  if (status === "active" || status === "completed" || status === "archived") {
-    return status;
-  }
-
-  return "not_generated";
-}
-
 export class DashboardService {
   private readonly supabase = getSupabaseServiceClient();
 
@@ -276,18 +266,6 @@ export class DashboardService {
       throw insightsError;
     }
 
-    const { data: roadmap, error: roadmapError } = await this.supabase
-      .from("learning_roadmaps")
-      .select("status")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (roadmapError) {
-      throw roadmapError;
-    }
-
     return {
       totalRepositories: repositoryRows.length,
       ownedRepositories: repositoryRows.filter((repository) => repository.owner_login === username && !repository.is_fork).length,
@@ -298,7 +276,6 @@ export class DashboardService {
         repository.relationship_type === "organization_member"
       ).length,
       workspaceInsightsGenerated: workspaceInsightsGenerated ?? 0,
-      learningRoadmapStatus: toRoadmapStatus(roadmap?.status),
       unreadNotifications: unreadNotifications ?? 0
     };
   }

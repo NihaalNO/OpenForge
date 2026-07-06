@@ -32,7 +32,7 @@ The current implementation provides a full-stack TypeScript foundation with a Ne
 | --- | --- |
 | 🧠 Skill-aware matching | Analyze contributor context and align users with repositories that fit their current technical profile. |
 | 🔎 Repository understanding | Surface repository details, contribution opportunities, issues, and project signals in a structured dashboard. |
-| 🛠️ Contribution planning | Generate actionable contribution plans, learning roadmaps, and repository-specific guidance. |
+| 🛠️ Contribution planning | Generate actionable contribution plans and repository-specific guidance. |
 | 🔐 Authenticated workflow | Support protected application flows with Supabase-ready authentication and onboarding. |
 | 📊 Evaluation readiness | Maintain modular services and shared contracts so recommendation quality can be evaluated over time. |
 
@@ -57,7 +57,7 @@ flowchart LR
 | ⚙️ Backend | Express, TypeScript, Zod | REST API, request middleware, controllers, services, validation, health endpoints. |
 | 📦 Shared | TypeScript workspace package | Shared API types, constants, and contracts used by frontend and backend. |
 | 🗄️ Data | SQL schema, Supabase-ready utilities | User, repository, recommendation, and contribution-oriented persistence model. |
-| 🤖 AI Services | Backend service abstraction | Contribution planning, roadmap generation, issue explanation, and AI response shaping. |
+| 🤖 AI Services | Backend service abstraction | Contribution planning, repository guidance, issue explanation, and AI response shaping. |
 | 🐙 GitHub | GitHub client/service layer | Repository metadata, issue-oriented workflows, and developer profile integration. |
 
 ## ✨ Feature Matrix
@@ -68,7 +68,7 @@ flowchart LR
 | ✅ Health API | Implemented | `GET /health` and versioned health routes. |
 | ✅ Dashboard shell | Implemented | Auth-aware application area with dashboard-oriented components. |
 | ✅ GitHub service layer | Implemented | Backend client/service structure and frontend API adapters. |
-| ✅ Workspace planning UI | Implemented | Workspace-owned repository guidance, learning roadmap, and contribution planning. |
+| ✅ Workspace planning UI | Implemented | Workspace-owned repository guidance through Home, Explorer, Mission, Mentor, Review, and Timeline. |
 | ✅ Shared contracts | Implemented | Reusable TypeScript package for cross-layer consistency. |
 | 🚧 Automated tests | Planned | Workspace test scripts currently act as placeholders. |
 | 🚧 Production deployment | Planned | Docker and deployment script placeholders are present. |
@@ -113,7 +113,7 @@ The project follows an incremental research-and-build methodology:
 1. **Profile acquisition**: collect authenticated developer context through GitHub and onboarding flows.
 2. **Repository signal extraction**: inspect repository metadata, issue surfaces, contribution hints, and project activity.
 3. **Skill-to-repository alignment**: compare contributor skill state against repository complexity and contribution opportunities.
-4. **AI-assisted planning**: produce contribution plans, learning roadmaps, and repository-specific explanations.
+4. **AI-assisted planning**: produce contribution plans and repository-specific explanations.
 5. **Feedback and evaluation**: refine recommendation quality using user actions, saved repositories, and contribution outcomes.
 
 ## ⚙️ Prerequisites
@@ -189,18 +189,18 @@ Future evaluation can measure the platform with both engineering and user-center
 | --- | --- |
 | Recommendation quality | Match score relevance, accepted recommendations, saved repositories. |
 | Onboarding efficiency | Time from login to first actionable contribution plan. |
-| AI usefulness | User rating of generated roadmap, plan specificity, hallucination rate. |
+| AI usefulness | User rating of generated plans, specificity, hallucination rate. |
 | System reliability | API uptime, response latency, failed GitHub sync attempts. |
 | Developer experience | Type coverage, build success, maintainability of shared contracts. |
 
-## 🗺️ Development Roadmap
+## 🗺️ Development Plan
 
 | Phase | Focus |
 | --- | --- |
 | Phase 1 | Full-stack foundation, shared contracts, health endpoints, initial app shell. |
 | Phase 2 | Supabase GitHub OAuth, authenticated user bootstrap, onboarding, protected routes. |
 | Phase 3 | GitHub synchronization, repository exploration, issue discovery, profile enrichment. |
-| Phase 4 | AI recommendation engine, contribution planner, learning roadmap generation. |
+| Phase 4 | AI recommendation engine, contribution planner, and workspace guidance. |
 | Phase 5 | Evaluation loops, analytics, notification workflows, deployment hardening. |
 
 ## 🤝 Contribution Notes
