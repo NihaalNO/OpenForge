@@ -26,6 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Badge, Button, EmptyState } from "@/components/common/ui";
+import { InteractiveRoadmap, PathVisualization, type FlowMilestone } from "@/components/visualizations";
 import { cn } from "@/lib/utils";
 import { WorkspaceCard } from "./workspace-components";
 import { timelineStorageKey } from "./review-engine";
@@ -485,9 +486,18 @@ function JourneyView({ items }: { items: GrowthItem[] }) {
       <SectionHeading eyebrow="Journey" title="Meaningful steps, not every interaction.">
         This path only includes moments that changed understanding, confidence, or contribution readiness.
       </SectionHeading>
-      <div className="mt-6 grid gap-3">
-        {items.map((item, index) => <JourneyRow key={item.id} item={item} last={index === items.length - 1} />)}
-      </div>
+      <InteractiveRoadmap
+        className="mt-6"
+        milestones={items.map((item): FlowMilestone => ({
+          id: item.id,
+          title: item.label,
+          description: item.description,
+          status: item.complete ? "complete" : "pending",
+          meta: item.complete ? formatDate(item.date) : "Waiting",
+          progress: item.complete ? 100 : 0,
+          details: [item.description]
+        }))}
+      />
     </WorkspaceCard>
   );
 }
@@ -676,17 +686,17 @@ function RepositoryStory({ repository, journey, knowledge }: { repository: GitHu
       <SectionHeading eyebrow="Repository Story" title={`Your journey inside ${repository.fullName}.`}>
         This view keeps the repository-specific thread intact, from understanding to contribution readiness.
       </SectionHeading>
-      <div className="mt-6 grid gap-3">
-        {story.length ? story.map((item, index) => (
-          <div key={item}>
-            <div className="flex items-center gap-3 rounded-[18px] border border-border bg-background p-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-soft-blue-wash text-sm font-semibold text-brand-violet">{index + 1}</span>
-              <p className="text-sm font-medium text-foreground">{item}</p>
-            </div>
-            {index < story.length - 1 ? <div className="ml-4 h-5 w-px bg-border" /> : null}
-          </div>
-        )) : <p className="text-sm leading-6 text-muted-foreground">This repository story will appear as soon as a meaningful workspace milestone exists.</p>}
-      </div>
+      {story.length ? (
+        <PathVisualization
+          className="mt-6"
+          steps={story.map((item, index) => ({
+            id: item,
+            title: item,
+            status: "complete" as const,
+            meta: index === 0 ? "Origin" : "Growth signal"
+          }))}
+        />
+      ) : <p className="mt-6 text-sm leading-6 text-muted-foreground">This repository story will appear as soon as a meaningful workspace milestone exists.</p>}
     </WorkspaceCard>
   );
 }

@@ -4,6 +4,7 @@ import type { AiLearningRoadmap } from "@openforge/shared";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button, Card, EmptyState, ErrorState, PageHeader } from "@/components/common/ui";
+import { InteractiveRoadmap, PathVisualization, type FlowMilestone } from "@/components/visualizations";
 import { generateLearningRoadmap } from "@/lib/api/ai";
 import { AiResultList } from "./ai-result-list";
 
@@ -55,6 +56,51 @@ export function LearningRoadmapPanel() {
 
       {roadmap ? (
         <>
+          <Card>
+            <h2 className="text-lg font-semibold">Weekly roadmap</h2>
+            <InteractiveRoadmap
+              className="mt-4"
+              milestones={roadmap.weeklyRoadmap.map((week, index): FlowMilestone => ({
+                id: `week-${week.week}`,
+                title: `Week ${week.week}`,
+                description: week.focus,
+                meta: `${week.tasks.length} tasks`,
+                status: index === 0 ? "active" : "pending",
+                progress: index === 0 ? 50 : 0,
+                details: week.tasks,
+                dependencies: index === 0 ? roadmap.currentSkills.slice(0, 2) : [`Week ${roadmap.weeklyRoadmap[index - 1]?.week ?? index}`]
+              }))}
+            />
+          </Card>
+          <Card>
+            <h2 className="text-lg font-semibold">Recommended learning path</h2>
+            <PathVisualization
+              className="mt-4"
+              steps={[
+                ...roadmap.currentSkills.slice(0, 2).map((skill, index) => ({
+                  id: `current-${skill}`,
+                  title: skill,
+                  description: "Existing strength to build from.",
+                  status: "complete" as const,
+                  meta: index === 0 ? "Starting point" : "Foundation"
+                })),
+                ...roadmap.missingSkills.slice(0, 3).map((skill, index) => ({
+                  id: `missing-${skill}`,
+                  title: skill,
+                  description: "Recommended next learning target.",
+                  status: index === 0 ? "active" as const : "pending" as const,
+                  meta: "Next skill"
+                })),
+                {
+                  id: "mission-ready",
+                  title: "Mission Ready",
+                  description: "Apply the sequence inside a focused repository contribution.",
+                  status: "pending" as const,
+                  meta: "Outcome"
+                }
+              ]}
+            />
+          </Card>
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <AiResultList title="Current skills" items={roadmap.currentSkills} />
@@ -63,24 +109,6 @@ export function LearningRoadmapPanel() {
               <AiResultList title="Missing skills" items={roadmap.missingSkills} />
             </Card>
           </div>
-          <Card>
-            <h2 className="text-lg font-semibold">Weekly plan</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {roadmap.weeklyRoadmap.map((week) => (
-                <div key={week.week} className="rounded-[24px] border border-border bg-background p-5">
-                  <span className="openforge-badge">Week {week.week}</span>
-                  <h3 className="mt-4 text-lg font-semibold">{week.focus}</h3>
-                  <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                    {week.tasks.map((task) => (
-                      <li key={task} className="rounded-[15px] border border-border bg-card p-3 leading-6">
-                        {task}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </Card>
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <AiResultList title="Suggested repositories" items={roadmap.suggestedRepositories} />

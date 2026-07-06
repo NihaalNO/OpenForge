@@ -89,6 +89,41 @@
     --shadow-xl: rgba(32, 36, 138, 0.25) -19px 5px 60px 4px;
   }
 
+  .dark {
+    --color-lavender-canvas: #05060f;
+    --color-card-white: #11131f;
+    --color-ink: #f7f8ff;
+    --color-muted-iris: #a6abc9;
+    --color-border-mist: #282c42;
+    --color-hover-iris: #c9cdf0;
+    --color-soft-blue-wash: #1d255a;
+    --color-brand-violet: #7583fd;
+    --color-brand-violet-light: #9aa4ff;
+    --color-shadow-violet: #11143a;
+
+    --background: 235 48% 5%;
+    --foreground: 235 100% 98%;
+    --card: 232 29% 9%;
+    --card-foreground: 235 100% 98%;
+    --popover: 232 29% 9%;
+    --popover-foreground: 235 100% 98%;
+    --primary: 234 96% 73%;
+    --primary-foreground: 235 48% 5%;
+    --secondary: 231 51% 23%;
+    --secondary-foreground: 235 100% 98%;
+    --muted: 232 28% 15%;
+    --muted-foreground: 231 22% 72%;
+    --accent: 231 51% 23%;
+    --accent-foreground: 235 100% 98%;
+    --destructive: 348 75% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 25% 22%;
+    --input: 230 25% 22%;
+    --ring: 234 96% 73%;
+
+    --shadow-xl: rgba(7, 10, 40, 0.65) -19px 5px 60px 4px;
+  }
+
   * {
     @apply border-border;
   }

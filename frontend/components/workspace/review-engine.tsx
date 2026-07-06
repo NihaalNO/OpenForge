@@ -22,6 +22,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Badge, Button, EmptyState } from "@/components/common/ui";
+import { PathVisualization, ProcedureFlow, type ProcedureStep } from "@/components/visualizations";
 import { cn } from "@/lib/utils";
 import { WorkspaceCard } from "./workspace-components";
 
@@ -624,28 +625,16 @@ export function ReviewEngine({
             </div>
           </div>
           <div className="mt-5 grid gap-2">
-            {stages.map((stage, index) => {
-              const active = stage.id === activeStage;
-              const Icon = stage.icon;
-
-              return (
-                <button
-                  key={stage.id}
-                  type="button"
-                  onClick={() => setActiveStage(stage.id)}
-                  className={cn(
-                    "flex min-h-12 cursor-pointer items-center gap-3 rounded-[18px] border p-3 text-left transition-colors",
-                    active ? "border-brand-violet/50 bg-soft-blue-wash/55" : "border-border bg-background hover:border-brand-violet/40"
-                  )}
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card text-xs font-semibold text-brand-violet">
-                    {index + 1}
-                  </span>
-                  <Icon className="h-4 w-4 shrink-0 text-brand-violet" aria-hidden="true" />
-                  <span className="text-sm font-medium text-foreground">{stage.label}</span>
-                </button>
-              );
-            })}
+            <PathVisualization
+              orientation="vertical"
+              steps={stages.map((stage) => ({
+                id: stage.id,
+                title: stage.label,
+                status: stage.id === activeStage ? "active" : "pending",
+                icon: stage.icon,
+                onSelect: () => setActiveStage(stage.id)
+              }))}
+            />
           </div>
         </WorkspaceCard>
       </aside>
@@ -787,29 +776,25 @@ function InteractiveChecklist({
   return (
     <WorkspaceCard>
       <SectionHeading eyebrow="Pull Request Checklist" title="Make the last pass interactive and repository-aware." />
-      <div className="mt-5 grid gap-3">
-        {items.map((item) => {
+      <ProcedureFlow
+        className="mt-5"
+        steps={items.map((item, index): ProcedureStep => {
           const complete = checkedItems[item.label] || item.complete;
 
-          return (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => onToggle(item.label)}
-              className="grid cursor-pointer gap-3 rounded-[18px] border border-border bg-background p-4 text-left transition-colors hover:border-brand-violet/40 sm:grid-cols-[24px_1fr]"
-            >
-              <CheckCircle2 className={cn("mt-0.5 h-5 w-5", complete ? "text-emerald-600" : "text-muted-foreground")} aria-hidden="true" />
-              <span>
-                <span className="block text-sm font-semibold text-foreground">{item.label}</span>
-                <span className="mt-1 block text-sm leading-6 text-muted-foreground">{item.detail}</span>
-                <span className="mt-2 block text-sm leading-6 text-foreground">
-                  <span className="font-medium">Why it matters:</span> {item.why}
-                </span>
-              </span>
-            </button>
-          );
+          return {
+            id: item.label,
+            title: item.label,
+            description: item.detail,
+            status: complete ? "complete" : index === 0 ? "active" : "pending",
+            dependencies: index === 0 ? [] : [items[index - 1]?.label ?? "Previous check"],
+            details: [`Why it matters: ${item.why}`],
+            action: {
+              label: complete ? "Mark Not Ready" : "Mark Ready",
+              onClick: () => onToggle(item.label)
+            }
+          };
         })}
-      </div>
+      />
     </WorkspaceCard>
   );
 }
