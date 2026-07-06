@@ -1,0 +1,51 @@
+do $$
+begin
+  if to_regclass('public.repository_recommendations') is not null then
+    drop policy if exists "Users can manage own repository recommendations" on public.repository_recommendations;
+    drop trigger if exists set_repository_recommendations_updated_at on public.repository_recommendations;
+  end if;
+
+  if to_regclass('public.issue_recommendations') is not null then
+    drop policy if exists "Users can manage own issue recommendations" on public.issue_recommendations;
+    drop trigger if exists set_issue_recommendations_updated_at on public.issue_recommendations;
+  end if;
+
+  if to_regclass('public.repository_intelligence') is not null then
+    drop policy if exists "Users can read own repository intelligence" on public.repository_intelligence;
+    drop policy if exists "Users can manage own repository intelligence" on public.repository_intelligence;
+    drop trigger if exists set_repository_intelligence_updated_at on public.repository_intelligence;
+  end if;
+end $$;
+
+drop index if exists public.idx_repository_recommendations_user_score;
+drop index if exists public.idx_repository_recommendations_user_status;
+drop index if exists public.idx_issue_recommendations_user_score;
+drop index if exists public.idx_issue_recommendations_user_status;
+drop index if exists public.idx_repository_intelligence_user_generated;
+drop index if exists public.idx_repository_intelligence_repository_status;
+drop index if exists public.idx_repository_intelligence_detected_stack;
+
+drop table if exists public.repository_recommendations;
+drop table if exists public.issue_recommendations;
+drop table if exists public.repository_intelligence;
+
+delete from public.ai_analysis_logs
+where analysis_type = 'contribution_plan';
+
+alter table public.ai_analysis_logs
+  drop constraint if exists ai_analysis_logs_analysis_type_check;
+
+alter table public.ai_analysis_logs
+  add constraint ai_analysis_logs_analysis_type_check
+  check (analysis_type in ('issue_explanation', 'roadmap', 'skill_gap'));
+
+drop index if exists public.idx_github_repositories_health_score;
+drop index if exists public.idx_github_issues_difficulty;
+
+alter table public.github_repositories
+  drop column if exists health_score,
+  drop column if exists difficulty_level;
+
+alter table public.github_issues
+  drop column if exists difficulty_level,
+  drop column if exists estimated_effort_hours;

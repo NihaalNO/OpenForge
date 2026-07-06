@@ -238,67 +238,6 @@ export interface SkillProfileResponse {
   skillProfile: SkillProfileSummary | null;
 }
 
-export interface AnalyzeSkillsResponse {
-  skillProfile: SkillProfileSummary;
-  repositoryRecommendationsGenerated: number;
-  issueRecommendationsGenerated: number;
-}
-
-export interface RecommendedRepository {
-  id: string;
-  score: number;
-  skillMatchScore: number;
-  difficultyScore: number;
-  activityScore: number;
-  reason: string | null;
-  status: string;
-  isSaved: boolean;
-  repository: GitHubRepositorySummary & {
-    healthScore: number | null;
-    difficultyLevel: string | null;
-  };
-}
-
-export interface RecommendedRepositoriesResponse {
-  recommendations: RecommendedRepository[];
-}
-
-export interface RecommendedIssue {
-  id: string;
-  score: number;
-  skillMatchScore: number;
-  difficultyScore: number;
-  freshnessScore: number;
-  reason: string | null;
-  status: string;
-  isSaved: boolean;
-  issue: GitHubIssueSummary & {
-    difficultyLevel: string | null;
-    estimatedEffortHours: number | null;
-    repository: {
-      id: string;
-      fullName: string;
-      ownerLogin: string;
-      name: string;
-      primaryLanguage: string | null;
-    };
-  };
-}
-
-export interface RecommendedIssuesResponse {
-  recommendations: RecommendedIssue[];
-}
-
-export interface SavedRepositoryResponse {
-  saved: boolean;
-  repositoryId: string;
-}
-
-export interface SavedIssueResponse {
-  saved: boolean;
-  issueId: string;
-}
-
 export interface AiIssueExplanation {
   summary: string;
   requiredKnowledge: string[];
@@ -318,14 +257,6 @@ export interface AiLearningRoadmap {
   }>;
   suggestedRepositories: string[];
   suggestedIssues: string[];
-}
-
-export interface AiContributionPlan {
-  taskPlan: string[];
-  setupChecklist: string[];
-  implementationChecklist: string[];
-  testingChecklist: string[];
-  pullRequestChecklist: string[];
 }
 
 export interface AiAnalysisResponse<TPayload> {
@@ -363,7 +294,7 @@ export interface DashboardResponse {
     ownedRepositories: number;
     forkedRepositories: number;
     contributedRepositories: number;
-    contributionPlansGenerated: number;
+    workspaceInsightsGenerated: number;
     learningRoadmapStatus: "not_generated" | "active" | "completed" | "archived";
     unreadNotifications: number;
   };

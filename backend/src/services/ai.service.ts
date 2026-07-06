@@ -1,6 +1,5 @@
 import type {
   AiAnalysisResponse,
-  AiContributionPlan,
   AiIssueExplanation,
   AiLearningRoadmap,
   AiLogSummary,
@@ -10,9 +9,8 @@ import { ConflictError, NotFoundError } from "../lib/http-error.js";
 import { getSupabaseServiceClient } from "../lib/supabase.js";
 import { env } from "../config/env.js";
 import { aiProviderService } from "./ai-provider.service.js";
-import { repositoryIntelligenceService } from "./repository-intelligence.service.js";
 
-type AnalysisType = "issue_explanation" | "roadmap" | "contribution_plan";
+type AnalysisType = "issue_explanation" | "roadmap";
 
 interface AiLogRow {
   id: string;
@@ -50,8 +48,6 @@ interface IssueContext {
   comments_count: number;
   good_first_issue: boolean;
   help_wanted: boolean;
-  difficulty_level: string | null;
-  estimated_effort_hours: number | null;
 }
 
 const systemPrompt =
@@ -63,14 +59,6 @@ function truncateText(value: string | null | undefined, maxLength = 4000) {
   }
 
   return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
-}
-
-function compactKnowledgePackage(value: unknown) {
-  if (!value) {
-    return null;
-  }
-
-  return truncateText(JSON.stringify(value), 12000);
 }
 
 function toLogSummary(row: AiLogRow): AiLogSummary {
@@ -195,61 +183,6 @@ ${JSON.stringify(contributionStats, null, 2)}`,
     });
 
     return result;
-  }
-
-  async generateContributionPlan(
-    userId: string,
-    issueId?: string,
-    repositoryId?: string,
-    regenerate = false
-  ): Promise<AiAnalysisResponse<AiContributionPlan>> {
-    await this.assertGitHubSynced(userId);
-    const issue = issueId ? await this.getIssue(issueId) : null;
-    const repository = repositoryId
-      ? await this.getRepository(repositoryId)
-      : issue
-        ? await this.getRepository(issue.repository_id)
-        : null;
-
-    if (!repository) {
-      throw new NotFoundError("Repository or issue context is required", "ai_context_missing");
-    }
-
-    const cached = regenerate
-      ? null
-      : await this.getCachedLog<AiContributionPlan>(
-          userId,
-          "contribution_plan",
-          repository.id,
-          issue?.id
-        );
-
-    if (cached) {
-      return cached;
-    }
-
-    const knowledgePackage = await repositoryIntelligenceService.getLatestKnowledgePackage(userId, repository.id);
-
-    return this.generateAndLog<AiContributionPlan>({
-      userId,
-      repositoryId: repository.id,
-      ...(issue?.id ? { issueId: issue.id } : {}),
-      analysisType: "contribution_plan",
-      prompt: `Create a repository-specific contribution plan for OpenForge's Contribution Workspace.
-
-Do not write generic checklist items. Ground every useful step in the repository metadata and Repository Knowledge Package when available. Prefer concrete setup commands, files, folders, risks, test strategy, and pull request preparation notes. If a command or path is unknown, say exactly what signal is missing instead of inventing it.
-
-Repository:
-${JSON.stringify(repository, null, 2)}
-
-Repository Knowledge Package, if available:
-${compactKnowledgePackage(knowledgePackage)}
-
-Issue:
-${JSON.stringify(issue, null, 2)}`,
-      schemaHint:
-        '{"taskPlan":["repository-specific next steps and files to inspect"],"setupChecklist":["detected commands, manifests, environment notes, or missing setup signals"],"implementationChecklist":["scoped implementation steps tied to repository paths and risks"],"testingChecklist":["detected test commands, test files, CI expectations, or manual verification notes"],"pullRequestChecklist":["specific PR summary, verification evidence, risk notes, and maintainer-friendly review prep"]}'
-    });
   }
 
   async listLogs(userId: string): Promise<AiLogsResponse> {
@@ -414,7 +347,7 @@ ${JSON.stringify(issue, null, 2)}`,
     const { data, error } = await this.supabase
       .from("github_issues")
       .select(
-        "id,repository_id,issue_number,title,body,labels,comments_count,good_first_issue,help_wanted,difficulty_level,estimated_effort_hours"
+        "id,repository_id,issue_number,title,body,labels,comments_count,good_first_issue,help_wanted"
       )
       .eq("id", issueId)
       .single();

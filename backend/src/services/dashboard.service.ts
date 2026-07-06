@@ -356,15 +356,14 @@ export class DashboardService {
       throw error;
     }
 
-    const { count: contributionPlansGenerated, error: planError } = await this.supabase
-      .from("ai_analysis_logs")
+    const { count: workspaceInsightsGenerated, error: insightsError } = await this.supabase
+      .from("repository_intelligence_context")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("status", "completed")
-      .eq("analysis_type", "contribution_plan");
+      .eq("status", "completed");
 
-    if (planError) {
-      throw planError;
+    if (insightsError) {
+      throw insightsError;
     }
 
     const { data: roadmap, error: roadmapError } = await this.supabase
@@ -388,7 +387,7 @@ export class DashboardService {
         repository.relationship_type === "contributor" ||
         repository.relationship_type === "organization_member"
       ).length,
-      contributionPlansGenerated: contributionPlansGenerated ?? 0,
+      workspaceInsightsGenerated: workspaceInsightsGenerated ?? 0,
       learningRoadmapStatus: toRoadmapStatus(roadmap?.status),
       unreadNotifications: unreadNotifications ?? 0
     };

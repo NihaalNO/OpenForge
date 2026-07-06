@@ -18,23 +18,6 @@ export async function generateLearningRoadmap(req: Request, res: Response) {
   res.json(await aiService.generateLearningRoadmap(requireUserId(req), shouldRegenerate(req)));
 }
 
-export async function generateContributionPlan(req: Request, res: Response) {
-  const body = (req.body ?? {}) as {
-    issueId?: string;
-    repositoryId?: string;
-    regenerate?: boolean;
-  };
-
-  res.json(
-    await aiService.generateContributionPlan(
-      requireUserId(req),
-      body.issueId,
-      body.repositoryId,
-      shouldRegenerate(req)
-    )
-  );
-}
-
 export async function listAiLogs(req: Request, res: Response) {
   res.json(await aiService.listLogs(requireUserId(req)));
 }

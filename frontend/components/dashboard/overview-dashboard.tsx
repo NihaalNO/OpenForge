@@ -62,7 +62,7 @@ export function OverviewDashboard() {
       <PageHeader
         eyebrow="User Overview"
         title="Your open-source control room"
-        description="GitHub sync, repository coverage, workspace plans, roadmap status, and recent updates in one calm workspace."
+        description="GitHub sync, repository coverage, workspace intelligence, roadmap status, and recent updates in one calm workspace."
         actions={
           <Button type="button" onClick={handleSync} disabled={isSyncing} variant="primary">
             <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -105,7 +105,7 @@ export function OverviewDashboard() {
         <StatCard label="Owned repositories" value={dashboard.metrics.ownedRepositories} icon={Star} />
         <StatCard label="Forked repositories" value={dashboard.metrics.forkedRepositories} icon={GitFork} />
         <StatCard label="Contributed repositories" value={dashboard.metrics.contributedRepositories} icon={Activity} />
-        <StatCard label="Plans generated" value={dashboard.metrics.contributionPlansGenerated} icon={BookOpen} />
+        <StatCard label="Workspace insights" value={dashboard.metrics.workspaceInsightsGenerated} icon={BookOpen} />
       </section>
 
       <section>

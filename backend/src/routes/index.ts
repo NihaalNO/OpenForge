@@ -5,7 +5,6 @@ import { dashboardRouter } from "./dashboard.routes.js";
 import { githubRouter } from "./github.routes.js";
 import { healthRouter } from "./health.routes.js";
 import { notificationsRouter } from "./notifications.routes.js";
-import { recommendationsRouter } from "./recommendations.routes.js";
 import { repositoryContextRouter } from "./repository-context.routes.js";
 import { settingsRouter } from "./settings.routes.js";
 
@@ -17,7 +16,6 @@ apiRouter.use("/dashboard", dashboardRouter);
 apiRouter.use("/github", githubRouter);
 apiRouter.use("/health", healthRouter);
 apiRouter.use("/notifications", notificationsRouter);
-apiRouter.use("/recommendations", recommendationsRouter);
 apiRouter.use("/repositories", repositoryContextRouter);
 apiRouter.use("/settings", settingsRouter);
 
