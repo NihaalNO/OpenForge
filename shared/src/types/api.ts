@@ -222,6 +222,38 @@ export interface RepositoryContextResponse {
   repositoryContextId: string;
 }
 
+export type WorkspaceModuleType = "explorer" | "mission" | "mentor" | "review" | "timeline";
+export type WorkspaceJobStage = "queued" | "fetching_structure" | "reading_documentation" | "understanding_dependencies" | "mapping_architecture" | "preparing_explorer" | "preparing_mission" | "preparing_mentor" | "preparing_review" | "workspace_ready" | "failed";
+
+export interface WorkspaceStatusResponse {
+  ready: boolean;
+  stale: boolean;
+  job: null | { id: string; status: "queued" | "running" | "completed" | "failed"; stage: WorkspaceJobStage; progressPercent: number; errorMessage: string | null };
+  snapshot: null | { id: string; headSha: string; contextVersion: string; generatedAt: string | null; staleAt: string | null };
+}
+
+export interface WorkspacePrepareResponse extends WorkspaceStatusResponse { accepted: boolean; }
+
+export interface WorkspaceModuleResponse {
+  moduleType: WorkspaceModuleType;
+  payload: Record<string, unknown>;
+  status: "pending" | "completed" | "failed" | "stale";
+  stale: boolean;
+  fallbackUsed: boolean;
+  provider: string;
+  model: string | null;
+  generatedAt: string | null;
+}
+
+export interface MentorQueryResponse {
+  answer: string;
+  depth: "beginner" | "standard" | "maintainer";
+  evidence: string[];
+  suggestedQuestions: string[];
+  insufficientEvidence: boolean;
+  fallbackUsed: boolean;
+}
+
 export interface SkillProfileSummary {
   id: string;
   experienceLevel: "beginner" | "intermediate" | "advanced";

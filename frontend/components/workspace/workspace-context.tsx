@@ -1,10 +1,10 @@
 "use client";
 
-import type { GitHubRepositorySummary, RepositoryKnowledgePackage } from "@openforge/shared";
+import type { GitHubRepositorySummary, RepositoryKnowledgePackage, WorkspaceModuleResponse, WorkspaceModuleType, WorkspaceStatusResponse } from "@openforge/shared";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   fetchGitHubRepository,
-  fetchRepositoryContext
+  fetchRepositoryContext, fetchWorkspaceModule, fetchWorkspaceStatus, prepareWorkspace
 } from "@/lib/api/github";
 
 export type WorkspaceStatus = "loading" | "ready" | "empty" | "error";
@@ -23,6 +23,9 @@ interface WorkspaceContextValue {
   intelligence: RepositoryKnowledgePackage | null;
   isLoading: boolean;
   isGenerating: boolean;
+  preparation: WorkspaceStatusResponse | null;
+  modulePackages: Partial<Record<WorkspaceModuleType,WorkspaceModuleResponse>>;
+  refresh: () => Promise<void>;
   status: WorkspaceStatus;
   error: string | null;
   futureMission: null;
@@ -46,7 +49,9 @@ export function WorkspaceProvider({
   const [repository, setRepository] = useState<GitHubRepositorySummary | null>(null);
   const [intelligence, setIntelligence] = useState<RepositoryKnowledgePackage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating] = useState(false);
+  const [isGenerating,setIsGenerating] = useState(false);
+  const [preparation,setPreparation] = useState<WorkspaceStatusResponse|null>(null);
+  const [modulePackages,setModulePackages]=useState<Partial<Record<WorkspaceModuleType,WorkspaceModuleResponse>>>({});
   const [error, setError] = useState<string | null>(null);
   const [mentorContext, setMentorContext] = useState<WorkspaceMentorContext>({ source: "workspace" });
 
@@ -60,6 +65,10 @@ export function WorkspaceProvider({
       if (!active) return;
 
       setRepository(repositoryResponse.repository);
+
+      const prepared=await prepareWorkspace(repositoryResponse.repository.id);
+      if(active){setPreparation(prepared);setIsGenerating(!prepared.ready && prepared.job?.status!=="failed");}
+      if(prepared.ready){const types:WorkspaceModuleType[]=["explorer","mission","mentor","review","timeline"];const packages=await Promise.all(types.map((type)=>fetchWorkspaceModule(repositoryResponse.repository.id,type)));if(active)setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}
 
       try {
         const intelligenceResponse = await fetchRepositoryContext(repositoryResponse.repository.id);
@@ -93,6 +102,8 @@ export function WorkspaceProvider({
     };
   }, [owner, repo]);
 
+  useEffect(()=>{if(!repository||!isGenerating)return;const timer=window.setInterval(()=>{void fetchWorkspaceStatus(repository.id).then((next)=>{setPreparation(next);setIsGenerating(!next.ready&&next.job?.status!=="failed");if(next.ready)void fetchRepositoryContext(repository.id).then((r)=>setIntelligence(r.knowledgePackage));}).catch(()=>undefined);},2000);return()=>window.clearInterval(timer);},[repository,isGenerating]);
+
   const value = useMemo<WorkspaceContextValue>(() => {
     const status: WorkspaceStatus = isLoading ? "loading" : error ? "error" : intelligence ? "ready" : "empty";
 
@@ -101,6 +112,9 @@ export function WorkspaceProvider({
       intelligence,
       isLoading,
       isGenerating,
+      preparation,
+      modulePackages,
+      refresh: async()=>{if(!repository)return;const next=await prepareWorkspace(repository.id,true);setPreparation(next);setIsGenerating(true);},
       status,
       error,
       futureMission: null,
@@ -109,7 +123,7 @@ export function WorkspaceProvider({
       setMentorContext,
       retry: () => loadWorkspace()
     };
-  }, [repository, intelligence, isLoading, isGenerating, error, mentorContext]);
+  }, [repository, intelligence, isLoading, isGenerating, error, mentorContext,preparation,modulePackages]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

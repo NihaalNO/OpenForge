@@ -438,14 +438,14 @@ export class RepositoryIntelligenceService {
 
   private async buildKnowledgePackage(client: GitHubClient, repository: RepositoryRow) {
     const limits = {
-      maxTreeEntries: env.REPO_INTEL_MAX_TREE_ENTRIES,
-      maxFiles: env.REPO_INTEL_MAX_FILES,
-      maxFileBytes: env.REPO_INTEL_MAX_FILE_BYTES,
-      maxTotalBytes: env.REPO_INTEL_MAX_TOTAL_BYTES,
+      maxTreeEntries: env.REPO_CONTEXT_MAX_TREE_ENTRIES,
+      maxFiles: env.REPO_CONTEXT_MAX_SELECTED_FILES,
+      maxFileBytes: env.REPO_CONTEXT_MAX_FILE_BYTES,
+      maxTotalBytes: env.REPO_CONTEXT_MAX_TOTAL_BYTES,
       truncated: false
     };
     const defaultBranch = repository.default_branch ?? "HEAD";
-    const readme = await this.fetchReadme(client, repository, env.REPO_INTEL_MAX_README_BYTES);
+    const readme = await this.fetchReadme(client, repository, env.REPO_CONTEXT_MAX_README_BYTES);
     const treePayload = await client.rest<TreePayload>(
       `/repos/${repository.owner_login}/${repository.name}/git/trees/${encodeURIComponent(defaultBranch)}?recursive=1`
     );
@@ -607,7 +607,7 @@ export class RepositoryIntelligenceService {
     for (const path of ranked) {
       selected.add(path);
 
-      if (selected.size >= env.REPO_INTEL_MAX_FILES) {
+      if (selected.size >= env.REPO_CONTEXT_MAX_SELECTED_FILES) {
         break;
       }
     }
@@ -620,7 +620,7 @@ export class RepositoryIntelligenceService {
     let totalBytes = 0;
 
     for (const path of paths) {
-      if (totalBytes >= env.REPO_INTEL_MAX_TOTAL_BYTES) {
+      if (totalBytes >= env.REPO_CONTEXT_MAX_TOTAL_BYTES) {
         break;
       }
 
@@ -632,13 +632,13 @@ export class RepositoryIntelligenceService {
             .join("/")}?ref=${encodeURIComponent(repository.default_branch ?? "HEAD")}`
         );
 
-        if (payload.type !== "file" || payload.size > env.REPO_INTEL_MAX_FILE_BYTES || isBinaryPath(payload.path)) {
+        if (payload.type !== "file" || payload.size > env.REPO_CONTEXT_MAX_FILE_BYTES || isBinaryPath(payload.path)) {
           continue;
         }
 
         const decoded = decodeContent(payload);
         const secretLike = hasSecretLikeContent(payload.path, decoded);
-        const allowedBytes = Math.min(env.REPO_INTEL_MAX_FILE_BYTES, env.REPO_INTEL_MAX_TOTAL_BYTES - totalBytes);
+        const allowedBytes = Math.min(env.REPO_CONTEXT_MAX_FILE_BYTES, env.REPO_CONTEXT_MAX_TOTAL_BYTES - totalBytes);
         const truncated = truncateByBytes(secretLike ? "[content omitted: possible secret-like values]" : decoded, allowedBytes);
 
         files.push({

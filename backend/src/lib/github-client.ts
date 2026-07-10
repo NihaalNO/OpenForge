@@ -81,7 +81,10 @@ export class GitHubClient {
   }
 
   async rest<T>(path: string, init: RequestInit = {}) {
-    const response = await fetch(`${this.baseUrl}${path}`, {
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
         Accept: "application/vnd.github+json",
@@ -89,7 +92,14 @@ export class GitHubClient {
         "X-GitHub-Api-Version": "2022-11-28",
         ...init.headers
       }
-    });
+        });
+      } catch (error) {
+        if (attempt === 2) throw new ExternalServiceError("GitHub API is unreachable", "github_unreachable", { path, cause: error instanceof Error ? error.message : "fetch failed" });
+      }
+      if (response && response.status < 500) break;
+      await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+    }
+    if (!response) throw new ExternalServiceError("GitHub API is unreachable", "github_unreachable", { path });
 
     this.updateRateLimit(response);
 

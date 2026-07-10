@@ -120,11 +120,12 @@ export class AiProviderService {
     }
 
     if (env.AI_PROVIDER === "groq") {
+      if (!env.AI_DEFAULT_MODEL) throw new ConfigurationError("AI_DEFAULT_MODEL is required when AI_PROVIDER=groq");
       return this.generateOpenAiCompatible<T>(
         input,
         env.GROQ_BASE_URL,
         requireApiKey("Groq", env.GROQ_API_KEY),
-        env.AI_DEFAULT_MODEL || "llama-3.1-70b-versatile"
+        env.AI_DEFAULT_MODEL
       );
     }
 

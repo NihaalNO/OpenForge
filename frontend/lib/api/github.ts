@@ -7,6 +7,7 @@ import type {
   GitHubRepositoryResponse,
   GitHubSyncResponse,
   RepositoryContextResponse
+  , WorkspaceModuleResponse, WorkspaceModuleType, WorkspacePrepareResponse, WorkspaceStatusResponse
 } from "@openforge/shared";
 import { apiRequest } from "./client";
 
@@ -72,5 +73,9 @@ export function fetchRepositoryContext(repositoryId: string) {
     `/repositories/${encodeURIComponent(repositoryId)}/context`
   );
 }
+
+export function prepareWorkspace(repositoryId:string,force=false){return apiRequest<WorkspacePrepareResponse>(`/repositories/${encodeURIComponent(repositoryId)}/workspace/prepare`,{method:"POST",body:JSON.stringify({force})});}
+export function fetchWorkspaceStatus(repositoryId:string){return apiRequest<WorkspaceStatusResponse>(`/repositories/${encodeURIComponent(repositoryId)}/workspace/status`);}
+export function fetchWorkspaceModule(repositoryId:string,moduleType:WorkspaceModuleType){return apiRequest<WorkspaceModuleResponse>(`/repositories/${encodeURIComponent(repositoryId)}/workspace/modules/${moduleType}`);}
 
 

@@ -444,19 +444,10 @@ export class GitHubService {
 
     await this.updateRateLimit(userId, client);
 
-    const repositoryIds = ((data ?? []) as Array<{ id: string }>).map((repository) => repository.id);
-    const contextResults = await mapWithConcurrency(repositoryIds, 3, async (repositoryId) => {
-      try {
-        await repositoryIntelligenceService.buildRepositoryIntelligence(userId, repositoryId);
-        return true;
-      } catch {
-        return false;
-      }
-    });
-
     return {
       repositoriesSynced: payloads.length,
-      repositoryContextsPrepared: contextResults.filter(Boolean).length
+      // Repository processing is intentionally lazy and begins when Workspace opens.
+      repositoryContextsPrepared: 0
     };
   }
 
