@@ -104,7 +104,7 @@ function fallbackList(items: string[], fallback: string) {
 }
 
 function readmePath(intelligence: RepositoryKnowledgePackage) {
-  return intelligence.readme.path ?? "README";
+  return intelligence.readme.path;
 }
 
 function primaryEntryPoint(intelligence: RepositoryKnowledgePackage) {
@@ -315,7 +315,7 @@ function buildConcepts(intelligence: RepositoryKnowledgePackage): ConceptNode[] 
     }
   ];
 
-  return definitions.filter((concept) => concept.strength === "primary" || conceptExists(intelligence, concept.id, paths));
+  return definitions.filter((concept) => conceptExists(intelligence, concept.id, paths));
 }
 
 function buildReadingJourney(intelligence: RepositoryKnowledgePackage, concepts: ConceptNode[]): ReadingStep[] {
@@ -327,11 +327,11 @@ function buildReadingJourney(intelligence: RepositoryKnowledgePackage, concepts:
   const service = concepts.find((concept) => concept.id === "service")?.relatedFiles[0] ?? concepts.find((concept) => concept.id === "backend")?.relatedFiles[0];
 
   return [
-    { title: "README", target: readmePath(intelligence), why: "Learn the repository promise, setup vocabulary, and maintainer framing.", conceptId: "documentation" },
-    { title: "Project Structure", target: entry ?? concepts[0]?.relatedModules[0] ?? "Primary entry point not detected", why: "Anchor the architecture before inspecting individual files.", conceptId: conceptIds.has("frontend") ? "frontend" : "backend" },
+    readmePath(intelligence) ? { title: "README", target: readmePath(intelligence)!, why: "It is currently an available source of project context.", conceptId: "documentation" as ConceptKind } : null,
+    entry ? { title: "Project Structure", target: entry, why: "Anchor the detected structure before inspecting individual files.", conceptId: conceptIds.has("frontend") ? "frontend" as ConceptKind : conceptIds.has("backend") ? "backend" as ConceptKind : undefined } : null,
     auth ? { title: "Authentication", target: auth, why: "Understand how protected behavior and user identity shape the system.", conceptId: "auth" } : null,
     service ? { title: "Core Services", target: service, why: "Follow the reusable operations that connect UI, API, and data.", conceptId: conceptIds.has("service") ? "service" : "backend" } : null,
-    { title: "Tests", target: tests ?? "No tests detected", why: "Learn how maintainers expect behavior to be verified.", conceptId: "testing" },
+    tests ? { title: "Tests", target: tests, why: "Learn how maintainers expect behavior to be verified.", conceptId: "testing" as ConceptKind } : null,
     contributing ? { title: "Contribution Guide", target: contributing, why: "Finish with review rules after the system shape is familiar.", conceptId: "documentation" } : null
   ].filter(Boolean) as ReadingStep[];
 }
@@ -407,7 +407,7 @@ function buildArchitecture(concepts: ConceptNode[]) {
   const map = new Map(concepts.map((concept) => [concept.id, concept]));
   const detected = order.map((id) => map.get(id)).filter(Boolean) as ConceptNode[];
 
-  return detected.length ? detected : concepts.slice(0, 5);
+  return detected;
 }
 
 function firstInsight(concepts: ConceptNode[]) {
@@ -441,6 +441,10 @@ export function WorkspaceExplorer({
         description={isGenerating ? "Understanding Repository..." : `${repository.fullName} will become an architecture map once repository context is ready.`}
       />
     );
+  }
+
+  if (concepts.filter((concept)=>concept.id!=="documentation").length===0) {
+    return <EmptyState title="There is not enough source code to map this repository yet." description="Explorer only shows files and concepts supported by repository evidence. Add implementation files to generate an architecture map." />;
   }
 
   function teachRepository() {

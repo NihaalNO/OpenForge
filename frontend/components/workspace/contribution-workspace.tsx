@@ -30,7 +30,7 @@ export function ContributionWorkspacePage({ owner, repo }: { owner: string; repo
 }
 
 function ContributionWorkspace() {
-  const { repository, intelligence, isLoading, isGenerating, preparation, refresh, error, retry, setMentorContext } = useWorkspace();
+  const { repository, intelligence, isLoading, isGenerating, preparation, modulePackages, refresh, error, retry, setMentorContext } = useWorkspace();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("map");
@@ -59,6 +59,7 @@ function ContributionWorkspace() {
     <WorkspaceLayout>
       <WorkspaceHeader repository={repository} />
       <WorkspacePreparation preparation={preparation} isGenerating={isGenerating} onRefresh={()=>void refresh()} />
+      {process.env.NODE_ENV === "development" ? <WorkspaceProvenance modulePackage={modulePackages.explorer} /> : null}
       {error ? <WorkspaceError message={error} /> : null}
       {activeTab === "map" ? (
         <WorkspaceExplorer
@@ -109,6 +110,11 @@ function ContributionWorkspace() {
       )}
     </WorkspaceLayout>
   );
+}
+
+function WorkspaceProvenance({modulePackage}:{modulePackage:import("@openforge/shared").WorkspaceModuleResponse|undefined}){
+  if(!modulePackage)return null;
+  return <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 font-mono text-xs leading-5 text-muted-foreground" role="status" aria-label="Workspace content provenance">Source: {modulePackage.fallbackUsed?"deterministic fallback":modulePackage.provider} · Repository: {modulePackage.repositoryFullName} ({modulePackage.repositoryId}) · Snapshot: {modulePackage.contextSnapshotId} · Head: {modulePackage.headSha.slice(0,8)} · Cache: {modulePackage.cacheHit?"hit":"miss"} · Generated: {modulePackage.generatedAt??"unknown"} · Grounded: {String(modulePackage.grounded)} · Evidence: {Math.round(modulePackage.evidenceCoverage*100)}%</div>;
 }
 
 const stageLabels:Record<string,string>={queued:"Preparing to begin",fetching_structure:"Fetching repository structure",reading_documentation:"Reading documentation",understanding_dependencies:"Understanding dependencies",mapping_architecture:"Mapping architecture",preparing_explorer:"Preparing Explorer",preparing_mission:"Preparing Mission",preparing_mentor:"Preparing Mentor",preparing_review:"Preparing Review",workspace_ready:"Workspace ready",failed:"Preparation needs attention"};

@@ -58,7 +58,11 @@ export function WorkspaceProvider({
   async function loadWorkspace(active = true) {
     setIsLoading(true);
     setError(null);
+    setRepository(null);
     setIntelligence(null);
+    setPreparation(null);
+    setModulePackages({});
+    setMentorContext({ source: "workspace" });
 
     try {
       const repositoryResponse = await fetchGitHubRepository(owner, repo);
@@ -68,7 +72,7 @@ export function WorkspaceProvider({
 
       const prepared=await prepareWorkspace(repositoryResponse.repository.id);
       if(active){setPreparation(prepared);setIsGenerating(!prepared.ready && prepared.job?.status!=="failed");}
-      if(prepared.ready){const types:WorkspaceModuleType[]=["explorer","mission","mentor","review","timeline"];const packages=await Promise.all(types.map((type)=>fetchWorkspaceModule(repositoryResponse.repository.id,type)));if(active)setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}
+      if(prepared.ready){const types:WorkspaceModuleType[]=["explorer","mission","mentor","review","timeline"];const packages=await Promise.all(types.map((type)=>fetchWorkspaceModule(repositoryResponse.repository.id,type)));if(active && packages.every((item)=>item.repositoryId===repositoryResponse.repository.id))setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}
 
       try {
         const intelligenceResponse = await fetchRepositoryContext(repositoryResponse.repository.id);
@@ -102,7 +106,7 @@ export function WorkspaceProvider({
     };
   }, [owner, repo]);
 
-  useEffect(()=>{if(!repository||!isGenerating)return;const timer=window.setInterval(()=>{void fetchWorkspaceStatus(repository.id).then((next)=>{setPreparation(next);setIsGenerating(!next.ready&&next.job?.status!=="failed");if(next.ready)void fetchRepositoryContext(repository.id).then((r)=>setIntelligence(r.knowledgePackage));}).catch(()=>undefined);},2000);return()=>window.clearInterval(timer);},[repository,isGenerating]);
+  useEffect(()=>{if(!repository||!isGenerating)return;const repositoryId=repository.id;const timer=window.setInterval(()=>{void fetchWorkspaceStatus(repositoryId).then(async(next)=>{setPreparation(next);setIsGenerating(!next.ready&&next.job?.status!=="failed");if(next.ready){const [context,...packages]=await Promise.all([fetchRepositoryContext(repositoryId),...(["explorer","mission","mentor","review","timeline"] as WorkspaceModuleType[]).map((type)=>fetchWorkspaceModule(repositoryId,type))]);if(context.knowledgePackage.repositoryId===repositoryId&&packages.every((item)=>item.repositoryId===repositoryId)){setIntelligence(context.knowledgePackage);setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}}}).catch(()=>undefined);},2000);return()=>window.clearInterval(timer);},[repository,isGenerating]);
 
   const value = useMemo<WorkspaceContextValue>(() => {
     const status: WorkspaceStatus = isLoading ? "loading" : error ? "error" : intelligence ? "ready" : "empty";

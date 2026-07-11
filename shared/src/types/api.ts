@@ -236,6 +236,10 @@ export interface WorkspacePrepareResponse extends WorkspaceStatusResponse { acce
 
 export interface WorkspaceModuleResponse {
   moduleType: WorkspaceModuleType;
+  repositoryId: string;
+  repositoryFullName: string;
+  contextSnapshotId: string;
+  headSha: string;
   payload: Record<string, unknown>;
   status: "pending" | "completed" | "failed" | "stale";
   stale: boolean;
@@ -243,6 +247,9 @@ export interface WorkspaceModuleResponse {
   provider: string;
   model: string | null;
   generatedAt: string | null;
+  grounded: boolean;
+  evidenceCoverage: number;
+  cacheHit: boolean;
 }
 
 export interface MentorQueryResponse {

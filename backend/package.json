@@ -8,7 +8,7 @@
     "build": "npm run build --prefix ../shared && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "npm run typecheck --prefix ../shared && tsc --noEmit",
-    "test": "echo \"No backend tests configured yet\""
+    "test": "node --import tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@openforge/shared": "file:../shared",
