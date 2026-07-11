@@ -10,5 +10,6 @@ export async function workspaceStatus(req:Request,res:Response){res.json(await w
 export async function workspaceContext(req:Request,res:Response){res.json(await workspaceIntelligenceService.getModule(user(req),repo(req),"explorer"));}
 export async function workspaceModule(req:Request,res:Response){res.json(await workspaceIntelligenceService.getModule(user(req),repo(req),moduleType(req)));}
 export async function regenerateModule(req:Request,res:Response){res.status(202).json(await workspaceIntelligenceService.prepare(user(req),repo(req),true));}
+export async function workspaceModuleDebug(req:Request,res:Response){if(process.env.NODE_ENV==="production")throw new NotFoundError("Not found");res.json(await workspaceIntelligenceService.debug(user(req),repo(req),moduleType(req)));}
 export async function mentorQuery(req:Request,res:Response){const question=String(req.body?.question??"").trim();if(!question)throw new NotFoundError("A Mentor question is required");const depth=["beginner","standard","maintainer"].includes(req.body?.depth)?req.body.depth:"standard";res.json(await workspaceIntelligenceService.mentorQuery(user(req),repo(req),question,depth,req.body?.sourceModule));}
 export async function mentorHistory(req:Request,res:Response){res.json(await workspaceIntelligenceService.history(user(req),repo(req)));}

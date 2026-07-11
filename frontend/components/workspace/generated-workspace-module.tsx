@@ -10,9 +10,12 @@ function cards(payload: Record<string, unknown>): GeneratedWorkspaceCard[] {
 }
 
 export function GeneratedWorkspaceModule({ repository, moduleType, modulePackage, isGenerating, onAskMentor }: { repository: GitHubRepositorySummary; moduleType: WorkspaceModuleType; modulePackage: WorkspaceModuleResponse | undefined; isGenerating: boolean; onAskMentor: ((card: { id: string; name: string }) => void) | undefined }) {
-  if (isGenerating || !modulePackage) return <EmptyState title={`Preparing ${moduleType}`} description="OpenForge is generating repository-specific guidance from the current evidence snapshot." />;
+  if (isGenerating) return <EmptyState title={`Preparing ${moduleType}…`} description="OpenForge is generating repository-specific guidance from the current evidence snapshot." />;
+  if (!modulePackage) return <EmptyState title={`OpenForge could not prepare ${moduleType}.`} description="Generation stopped before content became available. Use Retry or Refresh knowledge to safely start a fresh job." />;
   const provenance = modulePackage.provenance;
-  if (modulePackage.status === "failed") return <EmptyState title="Groq generation is currently unavailable." description="Repository facts are still available, but OpenForge could not prepare repository-specific guidance. Try generating this module again." />;
+  if (modulePackage.status === "failed") return <EmptyState title={`OpenForge could not prepare ${moduleType}.`} description={String(modulePackage.payload.summary??"Groq generation is currently unavailable. Retry is available.")} />;
+  if (modulePackage.status === "stale") return <EmptyState title={`${moduleType} is based on older repository data.`} description="Refresh is available." />;
+  if (modulePackage.status === "insufficient_evidence") return <EmptyState title={`There is not enough repository evidence to prepare ${moduleType}.`} description="No semantic cards were created merely to fill the interface." />;
   if (modulePackage.status !== "ready" || provenance.generationSource !== "groq" || provenance.provider !== "groq" || !provenance.grounded) return <EmptyState title="Repository-specific guidance is not available yet." description="OpenForge will not display semantic cards without validated Groq content and repository evidence." />;
   const generatedCards = cards(modulePackage.payload);
   if (!generatedCards.length) return <EmptyState title="There is not enough repository evidence for this module." description="No semantic cards were created merely to fill the interface." />;

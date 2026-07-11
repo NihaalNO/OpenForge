@@ -71,7 +71,7 @@ export function WorkspaceProvider({
       setRepository(repositoryResponse.repository);
 
       const prepared=await prepareWorkspace(repositoryResponse.repository.id);
-      if(active){setPreparation(prepared);setIsGenerating(!prepared.ready && prepared.job?.status!=="failed");}
+      if(active){setPreparation(prepared);setIsGenerating(!prepared.ready && ["queued","processing"].includes(prepared.job?.status??""));}
       if(prepared.ready){const types:WorkspaceModuleType[]=["explorer","mission","mentor","review","timeline"];const packages=await Promise.all(types.map((type)=>fetchWorkspaceModule(repositoryResponse.repository.id,type)));if(active && packages.every((item)=>item.repositoryId===repositoryResponse.repository.id))setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}
 
       try {
@@ -106,7 +106,7 @@ export function WorkspaceProvider({
     };
   }, [owner, repo]);
 
-  useEffect(()=>{if(!repository||!isGenerating)return;const repositoryId=repository.id;const timer=window.setInterval(()=>{void fetchWorkspaceStatus(repositoryId).then(async(next)=>{setPreparation(next);setIsGenerating(!next.ready&&next.job?.status!=="failed");if(next.ready){const [context,...packages]=await Promise.all([fetchRepositoryContext(repositoryId),...(["explorer","mission","mentor","review","timeline"] as WorkspaceModuleType[]).map((type)=>fetchWorkspaceModule(repositoryId,type))]);if(context.knowledgePackage.repositoryId===repositoryId&&packages.every((item)=>item.repositoryId===repositoryId)){setIntelligence(context.knowledgePackage);setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}}}).catch(()=>undefined);},2000);return()=>window.clearInterval(timer);},[repository,isGenerating]);
+  useEffect(()=>{if(!repository||!isGenerating)return;const repositoryId=repository.id;let failures=0;const timer=window.setInterval(()=>{void fetchWorkspaceStatus(repositoryId).then(async(next)=>{failures=0;if(repository.id!==repositoryId)return;setPreparation(next);setIsGenerating(!next.ready&&["queued","processing"].includes(next.job?.status??""));if(next.ready){const [context,...packages]=await Promise.all([fetchRepositoryContext(repositoryId),...(["explorer","mission","mentor","review","timeline"] as WorkspaceModuleType[]).map((type)=>fetchWorkspaceModule(repositoryId,type))]);if(context.knowledgePackage.repositoryId===repositoryId&&packages.every((item)=>item.repositoryId===repositoryId)){setIntelligence(context.knowledgePackage);setModulePackages(Object.fromEntries(packages.map((item)=>[item.moduleType,item])));}}}).catch((pollError)=>{failures+=1;if(failures>=3){setIsGenerating(false);setError(pollError instanceof Error?pollError.message:"Workspace status polling failed");}});},2000);return()=>window.clearInterval(timer);},[repository,isGenerating]);
 
   const value = useMemo<WorkspaceContextValue>(() => {
     const status: WorkspaceStatus = isLoading ? "loading" : error ? "error" : intelligence ? "ready" : "empty";
@@ -118,7 +118,7 @@ export function WorkspaceProvider({
       isGenerating,
       preparation,
       modulePackages,
-      refresh: async()=>{if(!repository)return;const next=await prepareWorkspace(repository.id,true);setPreparation(next);setIsGenerating(true);},
+      refresh: async()=>{if(!repository)return;setModulePackages({});const next=await prepareWorkspace(repository.id,true);setPreparation(next);setIsGenerating(["queued","processing"].includes(next.job?.status??""));},
       status,
       error,
       futureMission: null,

@@ -223,12 +223,13 @@ export interface RepositoryContextResponse {
 }
 
 export type WorkspaceModuleType = "explorer" | "mission" | "mentor" | "review" | "timeline";
+export type WorkspaceGenerationStatus = "queued" | "processing" | "ready" | "failed" | "stale" | "insufficient_evidence";
 export type WorkspaceJobStage = "queued" | "fetching_structure" | "reading_documentation" | "understanding_dependencies" | "mapping_architecture" | "preparing_explorer" | "preparing_mission" | "preparing_mentor" | "preparing_review" | "workspace_ready" | "failed";
 
 export interface WorkspaceStatusResponse {
   ready: boolean;
   stale: boolean;
-  job: null | { id: string; status: "queued" | "running" | "completed" | "failed"; stage: WorkspaceJobStage; progressPercent: number; errorMessage: string | null };
+  job: null | { id: string; status: "queued" | "processing" | "ready" | "failed" | "stale"; stage: WorkspaceJobStage; progressPercent: number; errorCode: string | null; errorMessage: string | null; lastHeartbeatAt: string | null };
   snapshot: null | { id: string; headSha: string; contextVersion: string; generatedAt: string | null; staleAt: string | null };
 }
 
@@ -241,7 +242,7 @@ export interface WorkspaceModuleResponse {
   contextSnapshotId: string;
   headSha: string;
   payload: Record<string, unknown>;
-  status: "pending" | "generating" | "ready" | "failed" | "stale" | "insufficient_evidence";
+  status: WorkspaceGenerationStatus;
   stale: boolean;
   fallbackUsed: boolean;
   provider: string;
