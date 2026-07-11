@@ -241,7 +241,7 @@ export interface WorkspaceModuleResponse {
   contextSnapshotId: string;
   headSha: string;
   payload: Record<string, unknown>;
-  status: "pending" | "completed" | "failed" | "stale";
+  status: "pending" | "generating" | "ready" | "failed" | "stale" | "insufficient_evidence";
   stale: boolean;
   fallbackUsed: boolean;
   provider: string;
@@ -250,7 +250,32 @@ export interface WorkspaceModuleResponse {
   grounded: boolean;
   evidenceCoverage: number;
   cacheHit: boolean;
+  provenance: WorkspaceModuleProvenance;
 }
+
+export interface WorkspaceModuleProvenance {
+  generationSource: "groq";
+  provider: "groq";
+  model: string;
+  repositoryId: string;
+  repositoryFullName: string;
+  contextSnapshotId: string;
+  headSha: string;
+  promptVersion: string;
+  contentVersion: string;
+  generatedAt: string;
+  grounded: boolean;
+  evidenceCoverage: number;
+}
+
+export interface GeneratedWorkspaceEvidence {
+  type: "file" | "directory" | "manifest" | "workflow" | "readme" | "issue" | "pull_request" | "commit" | "database_event";
+  path?: string;
+  identifier?: string;
+  explanation: string;
+}
+
+export interface GeneratedWorkspaceCard { id: string; title: string; summary: string; details: string[]; evidence: GeneratedWorkspaceEvidence[]; }
 
 export interface MentorQueryResponse {
   answer: string;

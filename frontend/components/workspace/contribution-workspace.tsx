@@ -64,7 +64,7 @@ function ContributionWorkspace() {
       {activeTab === "map" ? (
         <WorkspaceExplorer
           repository={repository}
-          intelligence={intelligence}
+          modulePackage={modulePackages.explorer}
           isGenerating={isGenerating}
           onAskMentor={(concept) => {
             setMentorContext({
@@ -79,7 +79,7 @@ function ContributionWorkspace() {
       ) : activeTab === "mission" ? (
         <MissionEngine
           repository={repository}
-          intelligence={intelligence}
+          modulePackage={modulePackages.mission}
           isGenerating={isGenerating}
           onAskMentor={(prompt) => {
             setMentorContext({ source: "mission", category: "mission", prompt });
@@ -89,14 +89,14 @@ function ContributionWorkspace() {
       ) : activeTab === "mentor" ? (
         <MentorEngine
           repository={repository}
-          intelligence={intelligence}
+          modulePackage={modulePackages.mentor}
           isGenerating={isGenerating}
           onOpenExplorer={() => changeTab("map")}
         />
       ) : activeTab === "review" ? (
         <ReviewEngine
           repository={repository}
-          intelligence={intelligence}
+          modulePackage={modulePackages.review}
           isGenerating={isGenerating}
           onAskMentor={(prompt) => {
             setMentorContext({ source: "review", category: "contribution", prompt });
@@ -104,7 +104,7 @@ function ContributionWorkspace() {
           }}
         />
       ) : activeTab === "timeline" ? (
-        <TimelineEngine repository={repository} intelligence={intelligence} />
+        <TimelineEngine repository={repository} modulePackage={modulePackages.timeline} isGenerating={isGenerating} />
       ) : (
         <WorkspacePlaceholder tab={activeTab} />
       )}
@@ -114,7 +114,7 @@ function ContributionWorkspace() {
 
 function WorkspaceProvenance({modulePackage}:{modulePackage:import("@openforge/shared").WorkspaceModuleResponse|undefined}){
   if(!modulePackage)return null;
-  return <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 font-mono text-xs leading-5 text-muted-foreground" role="status" aria-label="Workspace content provenance">Source: {modulePackage.fallbackUsed?"deterministic fallback":modulePackage.provider} · Repository: {modulePackage.repositoryFullName} ({modulePackage.repositoryId}) · Snapshot: {modulePackage.contextSnapshotId} · Head: {modulePackage.headSha.slice(0,8)} · Cache: {modulePackage.cacheHit?"hit":"miss"} · Generated: {modulePackage.generatedAt??"unknown"} · Grounded: {String(modulePackage.grounded)} · Evidence: {Math.round(modulePackage.evidenceCoverage*100)}%</div>;
+  const p=modulePackage.provenance; return <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 font-mono text-xs leading-5 text-muted-foreground" role="status" aria-label="Workspace content provenance">Repository: {p.repositoryFullName} · Module: {modulePackage.moduleType} · Source: Groq · Model: {p.model} · Snapshot: {p.contextSnapshotId} · Head: {p.headSha.slice(0,8)} · Content: {p.contentVersion} · Prompt: {p.promptVersion} · Generated: {p.generatedAt} · Cache: {modulePackage.cacheHit?"hit":"miss"} · Grounded: {String(p.grounded)} · Evidence: {Math.round(p.evidenceCoverage*100)}%</div>;
 }
 
 const stageLabels:Record<string,string>={queued:"Preparing to begin",fetching_structure:"Fetching repository structure",reading_documentation:"Reading documentation",understanding_dependencies:"Understanding dependencies",mapping_architecture:"Mapping architecture",preparing_explorer:"Preparing Explorer",preparing_mission:"Preparing Mission",preparing_mentor:"Preparing Mentor",preparing_review:"Preparing Review",workspace_ready:"Workspace ready",failed:"Preparation needs attention"};
