@@ -1,0 +1,4 @@
+import type { Request, Response } from "express";
+import { env } from "../config/env.js";
+import { aiOrchestratorService } from "../ai/orchestration/ai-orchestrator.service.js";
+export function getAiDiagnostics(_req:Request,res:Response){if(env.NODE_ENV!=="development")return res.status(404).json({message:"Not found"});const snapshot=aiOrchestratorService.diagnostics();return res.json({orchestrationVersion:env.AI_ORCHESTRATION_VERSION,providerPriority:env.AI_PROVIDER_PRIORITY.split(","),enabledProviders:[...new Set(snapshot.models.filter(m=>m.enabled).map(m=>m.provider))],configuredModels:snapshot.models.map(({provider,modelId,enabled,reasoningTier,capabilities,privateRepositoryAllowed})=>({provider,modelId,enabled,reasoningTier,capabilities,privateRepositoryAllowed})),providerHealth:snapshot.health,secretsExposed:false});}

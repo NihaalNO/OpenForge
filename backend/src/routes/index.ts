@@ -6,6 +6,7 @@ import { healthRouter } from "./health.routes.js";
 import { notificationsRouter } from "./notifications.routes.js";
 import { repositoryContextRouter } from "./repository-context.routes.js";
 import { settingsRouter } from "./settings.routes.js";
+import { aiDiagnosticsRouter } from "./ai-diagnostics.routes.js";
 
 export const apiRouter = Router();
 
@@ -16,5 +17,6 @@ apiRouter.use("/health", healthRouter);
 apiRouter.use("/notifications", notificationsRouter);
 apiRouter.use("/repositories", repositoryContextRouter);
 apiRouter.use("/settings", settingsRouter);
+apiRouter.use("/diagnostics/ai", aiDiagnosticsRouter);
 
 

@@ -3,8 +3,8 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export const REPOSITORY_INTELLIGENCE_VERSION = "repo-context-v2-grounded";
-export const WORKSPACE_CONTENT_VERSION = "workspace-modules-v3-groq-only";
-export const WORKSPACE_PROMPT_VERSION = "workspace-prompt-v5-exact-evidence-references";
+export const WORKSPACE_CONTENT_VERSION = "workspace-modules-v4-multi-provider";
+export const WORKSPACE_PROMPT_VERSION = "workspace-prompt-v6-reduced-evidence";
 const REQUIRED: WorkspaceModuleType[] = ["explorer", "mission", "mentor", "review", "timeline"];
 const LEGACY_PHRASES = ["Relationships before folders", "Understand how this repository works", "Teach Me This Repository", "No direct dependency was inferred", "Start at the route or page component first"];
 const LEGACY_MODULE_SET = new Set(["frontend", "backend", "services", "authentication", "database", "external apis", "testing", "documentation"]);

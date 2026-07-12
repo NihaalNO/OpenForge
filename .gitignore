@@ -14,6 +14,9 @@ coverage/
 frontend/out/
 *.tsbuildinfo
 docs/
+!docs/
+docs/*
+!docs/ai-orchestration.md
 
 # Environment files
 .env

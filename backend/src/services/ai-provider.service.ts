@@ -1,5 +1,8 @@
 import { ConfigurationError, ExternalServiceError } from "../lib/http-error.js";
 import { env } from "../config/env.js";
+import { z } from "zod";
+import { createHash } from "node:crypto";
+import { aiOrchestratorService } from "../ai/orchestration/ai-orchestrator.service.js";
 
 export interface AiGenerateJsonInput {
   system: string;
@@ -111,6 +114,27 @@ async function getProviderErrorMessage(response: Response, provider: string) {
 
 export class AiProviderService {
   async generateJson<T>(input: AiGenerateJsonInput): Promise<AiProviderResult<T>> {
+    if (env.AI_ORCHESTRATION_ENABLED) {
+      const routed = await aiOrchestratorService.execute<T>({
+        taskType: "architecture_synthesis",
+        repositoryId: "workspace",
+        privateRepository: true,
+        evidenceHash: createHash("sha256").update(input.prompt).digest("hex"),
+        system: input.system,
+        prompt: input.prompt,
+        schema: z.unknown().transform((value) => value as T),
+        schemaHint: input.schemaHint,
+        requiredCapabilities: ["structured_output", "architecture"],
+        preferredReasoningTier: "strong",
+        inputTokenBudget: env.AI_SYNTHESIS_INPUT_TOKEN_BUDGET,
+        outputTokenBudget: env.AI_SYNTHESIS_MAX_OUTPUT_TOKENS,
+        promptVersion: String(env.AI_ORCHESTRATION_VERSION)
+      });
+      if (routed.status !== "completed" || !routed.data || !routed.model) {
+        throw new ExternalServiceError("All eligible AI providers are unavailable", routed.errorCode ?? "ai_providers_unavailable");
+      }
+      return { data: routed.data, model: routed.model, inputTokens: 0, outputTokens: 0 };
+    }
     if (env.AI_PROVIDER === "gemini") {
       return this.generateGemini<T>(input);
     }
