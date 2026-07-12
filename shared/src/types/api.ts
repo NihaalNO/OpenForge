@@ -223,8 +223,11 @@ export interface RepositoryContextResponse {
 }
 
 export type WorkspaceModuleType = "explorer" | "mission" | "mentor" | "review" | "timeline";
+export type RepositoryEvidenceType = "repository_metadata" | "readme" | "documentation" | "directory" | "file" | "manifest" | "workflow" | "test" | "issue" | "pull_request" | "commit" | "mission" | "timeline_event" | "learning_history";
+export interface RepositoryEvidenceItem { id: string; type: RepositoryEvidenceType; path?: string; identifier?: string; title: string; content: string; relevanceScore: number; estimatedTokens: number; sourceSha?: string; truncated: boolean; }
+export interface RepositoryEvidencePackage { repositoryId: string; repositoryFullName: string; contextSnapshotId: string; headSha: string; moduleType: WorkspaceModuleType; tokenBudget: number; estimatedTokensUsed: number; evidence: RepositoryEvidenceItem[]; omittedEvidenceCount: number; truncated: boolean; generatedAt: string; }
 export type WorkspaceGenerationStatus = "queued" | "processing" | "ready" | "failed" | "stale" | "insufficient_evidence";
-export type WorkspaceJobStage = "queued" | "fetching_structure" | "reading_documentation" | "understanding_dependencies" | "mapping_architecture" | "preparing_explorer" | "preparing_mission" | "preparing_mentor" | "preparing_review" | "workspace_ready" | "failed";
+export type WorkspaceJobStage = "queued" | "fetching_structure" | "reading_documentation" | "understanding_dependencies" | "mapping_architecture" | "selecting_evidence" | "compressing_context" | "preparing_groq_request" | "preparing_explorer" | "preparing_mission" | "preparing_mentor" | "preparing_review" | "validating_content" | "workspace_ready" | "failed";
 
 export interface WorkspaceStatusResponse {
   ready: boolean;
@@ -267,10 +270,15 @@ export interface WorkspaceModuleProvenance {
   generatedAt: string;
   grounded: boolean;
   evidenceCoverage: number;
+  evidenceItemsUsed?: number;
+  estimatedInputTokens?: number;
+  configuredTokenBudget?: number;
+  evidenceTruncated?: boolean;
+  generationDurationMs?: number;
 }
 
 export interface GeneratedWorkspaceEvidence {
-  type: "file" | "directory" | "manifest" | "workflow" | "readme" | "issue" | "pull_request" | "commit" | "database_event";
+  type: RepositoryEvidenceType | "database_event";
   path?: string;
   identifier?: string;
   explanation: string;
