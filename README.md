@@ -1,220 +1,372 @@
-# 🧭 OpenForge
+# OpenForge
 
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=111111)
-![Express](https://img.shields.io/badge/Express-4-111111?style=for-the-badge&logo=express&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Ready-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+[![Status: Active development](https://img.shields.io/badge/status-active%20development-f59e0b)](#project-status)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs)](frontend/package.json)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111827)](frontend/package.json)
+[![TypeScript 5.7](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](package.json)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)](database/schema.sql)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
 
-**OpenForge** is an AI-powered workspace for understanding repositories and contributing to open source.
+**A repository-aware workspace that helps developers understand unfamiliar codebases and contribute to open source with confidence.**
 
-OpenForge now centers repository understanding inside the Workspace. Workspace Home, Explorer, Mission, Mentor, Review, and Timeline own the contributor journey without a separate tool surface.
+OpenForge brings repository structure, project conventions, source evidence, and contributor guidance into one coherent Workspace. It helps a developer understand how a project works, decide where to begin, and prepare a contribution without replacing GitHub or doing the thinking for them.
 
-The project studies a practical research question:
+> **Understanding is the first contribution.**
 
-> How can GitHub profile intelligence, repository metadata, and AI-guided planning reduce the discovery and onboarding friction faced by new and intermediate open-source contributors?
+## Product Overview
 
----
+The hardest part of a first contribution is often not writing code. It is reconstructing the context that maintainers already have: how the system is organized, which conventions matter, what to read first, and what a responsible change requires.
 
-## 📌 Abstract
+OpenForge shortens that learning curve. A developer connects GitHub, syncs repositories they can access, opens a repository Workspace, explores evidence-grounded guidance, chooses a Mission, asks contextual questions, reviews contribution readiness, and follows their progress over time.
 
-Open-source participation is often limited by information overload, unclear contribution pathways, and the difficulty of matching a developer's abilities to suitable repositories. OpenForge proposes a structured recommendation and planning system that combines GitHub data, skill analysis, repository assessment, and AI-generated contribution guidance.
+GitHub remains the source of truth for repositories, issues, pull requests, and collaboration. OpenForge adds a guided understanding layer. Unlike a general-purpose AI assistant, its Workspace is generated from bounded, repository-specific evidence and validated against the source material available to the application.
 
-The current implementation provides a full-stack TypeScript foundation with a Next.js frontend, Express backend, shared contracts package, Supabase-ready authentication utilities, GitHub-oriented service layers, dashboard views, AI planning panels, and database artifacts. The repository is organized as a monorepo to keep application, API, and shared type contracts aligned during iterative research and product development.
+## Core Workspace
 
-## 🔑 Keywords
+The Workspace is a connected contributor journey, not a collection of separate AI tools.
 
-`Open Source Discovery` · `GitHub Intelligence` · `AI Contribution Planning` · `Developer Onboarding` · `Repository Recommendation` · `Full-Stack TypeScript`
+### Home
 
-## 🎯 Research Objectives
+The repository entry experience establishes whether the repository is accessible, why it is relevant to the developer's GitHub relationship, how the project is built, and where exploration should begin. In the current implementation, this orientation is assembled from the repository detail, Workspace launcher, sync state, and initial Explorer context rather than stored as a separate generated module.
 
-| Objective | Description |
-| --- | --- |
-| 🧠 Skill-aware matching | Analyze contributor context and align users with repositories that fit their current technical profile. |
-| 🔎 Repository understanding | Surface repository details, contribution opportunities, issues, and project signals in a structured dashboard. |
-| 🛠️ Contribution planning | Generate actionable contribution plans and repository-specific guidance. |
-| 🔐 Authenticated workflow | Support protected application flows with Supabase-ready authentication and onboarding. |
-| 📊 Evaluation readiness | Maintain modular services and shared contracts so recommendation quality can be evaluated over time. |
+### Explorer
 
-## 🧩 System Overview
+Explorer presents repository architecture, important concepts, module relationships, contribution areas, and an evidence-backed reading order. It is the first generated Workspace module.
+
+### Mission
+
+Mission turns repository understanding into a structured contribution workflow, including implementation context, testing expectations, and preparation steps supported by repository evidence.
+
+### Mentor
+
+Mentor provides repository-aware explanations. Questions are answered from a bounded evidence package, with selectable explanation depth and suggested follow-up questions.
+
+### Review
+
+Review helps contributors assess whether a change is ready for a pull request by surfacing repository expectations, tests, workflows, and contribution guidance that can be verified from the repository.
+
+### Timeline
+
+Timeline reflects meaningful contributor progress and learning context. Its evidence model supports Workspace events and Mentor learning history; the current UI renders the generated Timeline package, while richer user-authored reflections and Mission state remain areas for continued development.
+
+## Repository Intelligence
+
+Repository Intelligence is the internal system that turns GitHub data into grounded Workspace context. It uses the authenticated user's GitHub access, so it can inspect public repositories and private repositories authorized for that account.
+
+The current pipeline collects and derives:
+
+- repository identity, branch, language, topic, license, activity, and relationship metadata;
+- a recursive Git tree, with ignored build/vendor paths and binary-file filtering;
+- README content, contribution documents, project documentation, and licenses;
+- dependency manifests and parsed package metadata;
+- likely entry points, important source files, tests, and GitHub Actions workflows;
+- bounded collaboration signals from commits, open issues, open pull requests, contributors, releases, and tags;
+- selected source evidence ranked for the active Workspace module;
+- secret-like file rejection and credential-pattern checks before evidence is used;
+- per-file, total-byte, item-count, prompt, and token limits for large repositories.
+
+Context snapshots are keyed to the repository head SHA and versioned extraction rules. Workspace modules and evidence packages are cached, marked stale when repository or content versions change, and regenerated lazily through a durable in-process job lifecycle with timeout recovery.
+
+Generated content must use structured JSON, cite supplied evidence, reference real repository paths or identifiers, and pass grounding validation before storage. When evidence is insufficient, OpenForge records that state instead of filling the interface with generic claims.
+
+> **Repository Intelligence is an internal engine. Users experience its results through the Workspace rather than through a separate analysis page.**
+
+## How OpenForge Works
 
 ```mermaid
 flowchart LR
-    User["👤 Developer"] --> Frontend["🖥️ Next.js Frontend"]
-    Frontend --> API["⚙️ Express API"]
-    API --> GitHub["🐙 GitHub Services"]
-    API --> AI["🤖 AI Planning Services"]
-    API --> DB["🗄️ Database / Supabase"]
-    API --> Shared["📦 Shared Type Contracts"]
-    Frontend --> Shared
+    User["Developer"] --> OAuth["GitHub OAuth via Supabase"]
+    OAuth --> Sync["Repository Sync"]
+    Sync --> Intelligence["Repository Intelligence"]
+    Intelligence --> Evidence["Bounded Evidence Extraction"]
+    Evidence --> Workspace["Contribution Workspace"]
+
+    Workspace --> Home["Home"]
+    Workspace --> Explorer["Explorer"]
+    Workspace --> Mission["Mission"]
+    Workspace --> Mentor["Mentor"]
+    Workspace --> Review["Review"]
+    Workspace --> Timeline["Timeline"]
 ```
 
-## 🏗️ Architecture
+Repository synchronization uses GitHub's REST API for repository data and its GraphQL API for contributed-repository and contribution context. The backend owns GitHub access and all Repository Intelligence work; the frontend receives authenticated, user-scoped API responses.
 
-| Layer | Technology | Responsibility |
+## Current Feature Status
+
+| Area | Status | Current scope |
 | --- | --- | --- |
-| 🖥️ Frontend | Next.js 15, React 19, Tailwind CSS | Application shell, protected pages, dashboards, repository views, and Workspace flows. |
-| ⚙️ Backend | Express, TypeScript, Zod | REST API, request middleware, controllers, services, validation, health endpoints. |
-| 📦 Shared | TypeScript workspace package | Shared API types, constants, and contracts used by frontend and backend. |
-| 🗄️ Data | SQL schema, Supabase-ready utilities | User, repository, recommendation, and contribution-oriented persistence model. |
-| 🤖 AI Services | Backend service abstraction | Contribution planning, repository guidance, issue explanation, and AI response shaping. |
-| 🐙 GitHub | GitHub client/service layer | Repository metadata, issue-oriented workflows, and developer profile integration. |
+| GitHub OAuth and profile sync | Implemented | Supabase GitHub sign-in, authenticated session handling, profile/account sync, and onboarding |
+| Public and authorized private repository sync | Implemented | Uses the connected GitHub account and verifies access before intelligence generation |
+| Owned, forked, collaborator, contributor, and organization repositories | Implemented | REST affiliation sync plus GraphQL contributed-repository enrichment |
+| Repository Intelligence | Implemented | Versioned context snapshots, recursive tree inspection, document/manifest/test/workflow detection, and collaboration counts |
+| Workspace Home/orientation | Implemented | Repository selection, relationship context, repository detail, preparation state, and initial Workspace orientation |
+| Explorer | Implemented | Grounded, generated Workspace module |
+| Mission | Implemented | Grounded, generated Workspace module; deeper interactive Mission state is still evolving |
+| Mentor | Implemented | Generated module plus repository-grounded question endpoint and history storage |
+| Review | Implemented | Grounded, generated readiness guidance; it does not inspect a local git diff |
+| Timeline | In progress | Generated module and learning-history persistence exist; richer reflections and progress interactions are not complete |
+| Notifications | Implemented | List, read, read-all, and delete operations with a frontend center |
+| Settings | Implemented | User profile and Workspace preference reads/updates |
+| Background Workspace generation | Implemented | Durable database job state, asynchronous in-process execution, polling, stale state, retries, and startup timeout recovery |
+| Evidence extraction and grounding | Implemented | Module budgets, ranking, truncation, path/identifier validation, and insufficient-evidence states |
+| Groq provider integration | Implemented | OpenAI-compatible Groq endpoint remains supported through configuration |
+| Multi-provider orchestration | Implemented | Provider registry, routing, retries, health/cooldowns, structured output, reduction, verification, and summary cache; operational maturity is still evolving |
+| Automated test coverage | In progress | Backend tests cover orchestration, evidence extraction, and grounding; frontend/shared test scripts are placeholders |
 
-## ✨ Feature Matrix
+## Technology Stack
 
-| Area | Status | Notes |
-| --- | --- | --- |
-| ✅ Monorepo foundation | Implemented | `frontend`, `backend`, and `shared` use isolated npm installs and lockfiles. |
-| ✅ Health API | Implemented | `GET /health` and versioned health routes. |
-| ✅ Dashboard shell | Implemented | Auth-aware application area with dashboard-oriented components. |
-| ✅ GitHub service layer | Implemented | Backend client/service structure and frontend API adapters. |
-| ✅ Workspace planning UI | Implemented | Workspace-owned repository guidance through Home, Explorer, Mission, Mentor, Review, and Timeline. |
-| ✅ Shared contracts | Implemented | Reusable TypeScript package for cross-layer consistency. |
-| 🚧 Automated tests | Planned | Workspace test scripts currently act as placeholders. |
-| 🚧 Production deployment | Planned | Docker and deployment script placeholders are present. |
+Versions below come from the current package manifests.
 
-## 📁 Repository Structure
+### Frontend
+
+- Next.js `^15.1.3`, React and React DOM `^19.0.0`
+- TypeScript `^5.7.2`
+- Tailwind CSS `^3.4.17`, PostCSS, and Autoprefixer
+- Radix UI Slot, Class Variance Authority, `clsx`, and `tailwind-merge`
+- Framer Motion and Lucide React
+- Supabase JavaScript client `^2.108.2`
+
+### Backend
+
+- Node.js with Express `^4.21.2`
+- TypeScript `^5.7.2` and `tsx`
+- Zod `^3.24.1` for configuration and structured validation
+- Helmet, CORS, and `dotenv`
+- Asynchronous in-process Workspace jobs backed by durable PostgreSQL state
+
+### Data and Authentication
+
+- Supabase Authentication and GitHub OAuth
+- Supabase JavaScript client `^2.108.2`
+- PostgreSQL schema, incremental SQL migrations, and user-scoped Row Level Security policies
+
+### Repository Intelligence
+
+- GitHub REST and GraphQL APIs
+- Recursive tree and file-content inspection
+- Manifest, documentation, workflow, test, and source-path classification
+- Bounded evidence selection, caching, redaction checks, and provenance validation
+
+### AI
+
+- Configuration-driven Groq support through an OpenAI-compatible adapter
+- Provider abstraction with Z.AI, NVIDIA, OpenAI, and OpenRouter adapters
+- Capability-aware routing, retries, cooldowns, and token budgets
+- Structured JSON generation, deterministic evidence reduction, and grounding validation
+
+See [Multi-provider AI orchestration](docs/ai-orchestration.md) for the implemented routing and grounding model.
+
+## Repository Structure
 
 ```text
 OpenForge/
-├── frontend/                         # Next.js application workspace
-│   ├── app/                           # App Router pages and layouts
-│   │   ├── app/                       # Protected application routes
-│   │   ├── auth/callback/             # Authentication callback route
-│   │   ├── login/                     # Login page
-│   │   └── onboarding/                # User onboarding page
-│   ├── components/                    # UI, auth, dashboard, GitHub, and AI components
-│   ├── lib/                           # API clients, environment helpers, Supabase client
-│   └── package.json                   # Frontend scripts and dependencies
-├── backend/                           # Express API workspace
+├── frontend/
+│   ├── app/                         # Next.js routes and authenticated application shell
+│   ├── components/
+│   │   ├── workspace/              # Explorer, Mission, Mentor, Review, and Timeline UI
+│   │   ├── github/                 # Repository sync, list, and detail UI
+│   │   └── dashboard/              # Overview, notifications, and settings UI
+│   ├── lib/                         # API, environment, and Supabase clients
+│   └── package.json
+├── backend/
 │   ├── src/
-│   │   ├── config/                    # Environment configuration
-│   │   ├── controllers/               # Route controllers
-│   │   ├── lib/                       # HTTP errors, JWT, GitHub and Supabase helpers
-│   │   ├── middleware/                # Auth, errors, request IDs, 404 handling
-│   │   ├── repositories/              # Data access abstractions
-│   │   ├── routes/                    # API route modules
-│   │   ├── services/                  # GitHub, AI, dashboard, settings, notification logic
-│   │   └── server.ts                  # API entry point
-│   └── package.json                   # Backend scripts and dependencies
-├── shared/                            # Shared TypeScript package
-│   └── src/                           # API contracts, constants, and shared types
-├── database/                          # SQL schema, migrations, and seeds
-├── scripts/                           # Development, sync, and deployment script placeholders
-├── docker-compose.yml                 # Optional local PostgreSQL service
-├── ├── package.json                       # Root helper scripts
-└── README.md                          # Research-grade project overview
+│   │   ├── ai/                     # Provider adapters and orchestration
+│   │   ├── controllers/            # HTTP request handlers
+│   │   ├── routes/                 # Versioned Express API routes
+│   │   ├── services/               # GitHub, intelligence, evidence, and Workspace logic
+│   │   └── server.ts               # Backend entry point and job recovery
+│   ├── tests/                       # Node test-runner backend tests
+│   └── package.json
+├── shared/
+│   └── src/                         # Shared API types, schemas, and constants
+├── database/
+│   ├── schema.sql                   # Baseline schema
+│   └── migrations/                 # Ordered add-on migrations
+├── docs/
+│   ├── codex/                      # Product and engineering constitutions
+│   └── ai-orchestration.md         # Current AI architecture
+├── scripts/                         # Development, sync, and deployment guidance
+├── docker-compose.yml              # Optional local PostgreSQL 16 service
+├── package.json                    # Root orchestration scripts
+└── README.md
 ```
 
-## 🧪 Methodology
+## Prerequisites
 
-The project follows an incremental research-and-build methodology:
+- Node.js 20 LTS or newer is recommended. The repository does not currently pin a Node engine; its current Next.js and TypeScript toolchain must be supported by the selected runtime.
+- npm `10.9.0`, as declared by the root `packageManager` field.
+- A Supabase project with Authentication and PostgreSQL access.
+- A GitHub OAuth application configured for the Supabase callback flow.
+- At least one enabled AI provider API key and an explicit supported model ID. Groq is the simplest compatibility configuration; multi-provider orchestration supports the configured adapters listed above.
+- Optional: Docker with Compose, or a local PostgreSQL installation, for the standalone development database service.
 
-1. **Profile acquisition**: collect authenticated developer context through GitHub and onboarding flows.
-2. **Repository signal extraction**: inspect repository metadata, issue surfaces, contribution hints, and project activity.
-3. **Skill-to-repository alignment**: compare contributor skill state against repository complexity and contribution opportunities.
-4. **AI-assisted planning**: produce contribution plans and repository-specific explanations.
-5. **Feedback and evaluation**: refine recommendation quality using user actions, saved repositories, and contribution outcomes.
+## Environment Setup
 
-## ⚙️ Prerequisites
-
-| Tool | Recommended Version | Purpose |
-| --- | --- | --- |
-| Node.js | 20+ | Runtime for frontend, backend, and shared packages. |
-| npm | 10+ | Package manager for each app folder. |
-| Docker | Optional | Local PostgreSQL service through `docker-compose.yml`. |
-
-## 🚀 Local Development
-
-1. Install dependencies.
-
-   ```bash
-   npm run install:all
-   ```
-
-2. Create local environment files.
-
-   ```bash
-   cp .env.example .env
-   cp frontend/.env.example frontend/.env.local
-   cp backend/.env.example backend/.env
-   ```
-
-3. Start PostgreSQL if you want the local database service.
-
-   ```bash
-   docker compose up -d postgres
-   ```
-
-4. Run the development stack.
-
-   ```bash
-   npm run dev:backend
-   npm run dev:frontend
-   ```
-
-| Service | Default URL |
-| --- | --- |
-| 🖥️ Frontend | `http://localhost:3000` |
-| ⚙️ Backend | `http://localhost:4000` |
-
-## 🧰 Command Reference
-
-```bash
-npm run install:all     # Install shared, backend, and frontend dependencies independently
-npm run dev:frontend    # Build shared, then start only the Next.js frontend
-npm run dev:backend     # Build shared, then start only the Express backend
-npm run build           # Build shared, backend, and frontend packages
-npm run typecheck       # Type-check all TypeScript packages
-npm run test            # Run backend and frontend test placeholders
-npm run build --prefix backend     # Build backend from its own folder
-npm run build --prefix frontend    # Build frontend from its own folder
-```
-
-## 🔐 Environment Model
-
-The repository includes example environment files for the root, frontend, and backend packages. Runtime configuration is centralized through environment helper modules so missing or invalid values can be reported clearly during development.
+Create local environment files from the checked-in examples:
 
 ```text
-.env.example
-frontend/.env.example
-backend/.env.example
+frontend/.env.local  <- frontend/.env.example
+backend/.env         <- backend/.env.example
 ```
 
-## 📊 Evaluation Plan
+The frontend file contains public application, API, and Supabase client configuration. The backend example groups configuration for:
 
-Future evaluation can measure the platform with both engineering and user-centered criteria:
+- application ports, origins, runtime mode, and logging;
+- Supabase URLs, keys, JWT verification, and database access;
+- GitHub OAuth credentials;
+- AI provider enablement, keys, endpoints, model registries, routing, retries, and timeouts;
+- repository tree, file, byte, and collaboration extraction limits;
+- Workspace module token budgets, evidence limits, prompt limits, and content versions;
+- background job timeouts, parallelism, cooldowns, and recovery behavior.
 
-| Dimension | Example Metric |
-| --- | --- |
-| Recommendation quality | Match score relevance, accepted recommendations, saved repositories. |
-| Onboarding efficiency | Time from login to first actionable contribution plan. |
-| AI usefulness | User rating of generated plans, specificity, hallucination rate. |
-| System reliability | API uptime, response latency, failed GitHub sync attempts. |
-| Developer experience | Type coverage, build success, maintainability of shared contracts. |
+Use [frontend/.env.example](frontend/.env.example) and [backend/.env.example](backend/.env.example) as the complete schema. Do not commit populated environment files.
 
-## 🗺️ Development Plan
+A minimal Groq-compatible AI selection is:
 
-| Phase | Focus |
-| --- | --- |
-| Phase 1 | Full-stack foundation, shared contracts, health endpoints, initial app shell. |
-| Phase 2 | Supabase GitHub OAuth, authenticated user bootstrap, onboarding, protected routes. |
-| Phase 3 | GitHub synchronization, repository exploration, issue discovery, profile enrichment. |
-| Phase 4 | AI recommendation engine, contribution planner, and workspace guidance. |
-| Phase 5 | Evaluation loops, analytics, notification workflows, deployment hardening. |
+```env
+AI_PROVIDER=groq
+AI_DEFAULT_MODEL=<supported-model-id>
+GROQ_API_KEY=<your-key>
+```
 
-## 🤝 Contribution Notes
+Model IDs are configuration-driven. For multi-provider operation, enable and configure at least one adapter with explicit model settings; providers without usable credentials or models are skipped.
 
-OpenForge is structured for modular contribution. Frontend work generally belongs in `frontend/app`, `frontend/components`, or `frontend/lib`; backend work should follow the route-controller-service structure under `backend/src`; shared API contracts should be placed in `shared/src` when both application layers need the same type definitions.
+## Installation
 
-Before opening a pull request, run:
+Install all three isolated packages from the repository root:
+
+```bash
+npm run install:all
+```
+
+Packages can also be installed independently:
+
+```bash
+cd shared
+npm install
+```
+
+```bash
+cd backend
+npm install
+```
+
+```bash
+cd frontend
+npm install
+```
+
+## Running Locally
+
+Run the backend and frontend in separate terminals from the repository root:
+
+```bash
+npm run dev:backend
+```
+
+```bash
+npm run dev:frontend
+```
+
+Default local endpoints:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:4000`
+- Health: `http://localhost:4000/health` (also available at `/api/v1/health`)
+
+The optional Compose service starts PostgreSQL 16 and initializes a new volume from the baseline schema:
+
+```bash
+docker compose up -d postgres
+```
+
+Supabase remains required for the application's current authentication and service-client integration; the Compose database is a local PostgreSQL aid, not a complete local Supabase replacement.
+
+## Build and Validation
+
+The root package exposes these validation commands:
 
 ```bash
 npm run typecheck
 npm run build
+npm run test
 ```
 
-## 📜 License
+`typecheck` covers shared, backend, and frontend packages. `build` compiles the backend and builds the Next.js application. `test` runs the backend Node test suite, then the current frontend placeholder script; the shared package also has a placeholder test script and there is not yet comprehensive end-to-end coverage.
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Package-specific build commands also exist: `npm run build:shared`, `npm run build:backend`, and `npm run build:frontend`.
 
+## Database Migrations
+
+The baseline schema is [database/schema.sql](database/schema.sql). Incremental changes live in [database/migrations/](database/migrations/) as ordered `addon-XX.sql` files.
+
+Never edit a migration that has already been applied. Add each database change in the next unused add-on migration file, keep it forward-safe and user-isolated, and apply migrations in order after the baseline. The baseline still records historical tables that later migrations remove, so current installations require the full migration sequence.
+
+## The OpenForge Codex
+
+The [OpenForge Codex](docs/codex/01-manifesto.md) in `docs/codex/` is the project's product and contributor constitution. Its chapters define:
+
+- product philosophy and the boundaries of what OpenForge should become;
+- UX principles and the contributor experience;
+- AI behavior, evidence standards, and responsible guidance;
+- visual and interaction design principles;
+- engineering and contribution rules;
+- approved product language;
+- the end-to-end experience map;
+- a decision framework for evaluating changes.
+
+Start with the [Manifesto](docs/codex/01-manifesto.md), use the [Language Guide](docs/codex/07-language-guide.md) when writing product copy, and apply the [Decision Framework](docs/codex/09-decision-framework.md) when proposing product changes.
+
+> **If implementation choices conflict with the OpenForge Codex, the Codex takes precedence.**
+
+## Security and Privacy
+
+- GitHub access tokens are read and used only by backend services; they are not returned through frontend API contracts.
+- Repository access is rechecked with the connected GitHub account before intelligence generation, including for private repositories.
+- Context snapshots, Workspace modules, evidence caches, learning history, and job state are keyed by user and repository. Current migrations enable user-scoped RLS for these stores.
+- Repository files are untrusted input. System prompts explicitly reject repository instructions and require claims to come from supplied evidence.
+- Non-example environment files and content matching credential patterns are rejected; redaction metadata is recorded with each context snapshot.
+- Tree entries, selected files, file bytes, total bytes, collaboration records, evidence items, prompt size, and token use are bounded by configuration.
+- OpenForge stores selected and truncated repository evidence, derived knowledge packages, and generated Workspace content to support caching. It does not clone or intentionally persist an unrestricted full repository, but selected private source excerpts may be present in user-scoped backend storage.
+- Grounding validation rejects unsupported cards, nonexistent paths, unknown evidence identifiers, and malformed structured output before generated content is marked ready.
+
+These controls are implemented safeguards, not a completed security certification. Production deployment still requires threat modeling, secret-management review, monitoring, dependency review, and security testing.
+
+## Project Status
+
+OpenForge is under active development. The core repository sync, Repository Intelligence pipeline, and five generated contributor Workspace modules are implemented. Multi-provider orchestration, evidence grounding, durable generation state, notifications, and settings are also present.
+
+The project is not yet production-ready. Frontend and end-to-end automated testing are limited, background work currently runs in the API process rather than a dedicated worker, Timeline and Mission interactions are still maturing, and deployment, observability, accessibility, performance, and security hardening remain ongoing.
+
+## Roadmap
+
+### Current
+
+- Improve Repository Intelligence quality and source selection.
+- Strengthen evidence extraction, provenance, and grounding verification.
+- Increase Workspace generation reliability and recovery coverage.
+- Improve bounded handling of large repositories.
+- Complete interactive Mission, Timeline, and contributor feedback states.
+
+### Next
+
+- Mature multi-provider routing, evaluation, and operational diagnostics.
+- Expand frontend, integration, and end-to-end automated tests.
+- Harden deployment, monitoring, rate-limit handling, and security controls.
+- Build feedback loops that show whether guidance increased contributor confidence.
+
+## Contributing
+
+1. Fork the repository or clone a branch you can write to.
+2. Create a focused branch for one change.
+3. Install dependencies with `npm run install:all`.
+4. Configure local frontend and backend environment files from the examples.
+5. Make the smallest coherent product or engineering change.
+6. Run `npm run typecheck`, `npm run build`, and `npm run test`.
+7. Open a pull request that explains the problem, the evidence for the approach, and any remaining limitations.
+
+Product, language, UX, AI, and design changes must follow the [OpenForge Codex](docs/codex/01-manifesto.md). Database changes must use a new ordered add-on migration and must not rewrite applied migrations.
+
+## License
+
+OpenForge is available under the [MIT License](LICENSE).
